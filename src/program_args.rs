@@ -4,6 +4,8 @@ use clap::{Arg, App};
 pub struct ProgramArguments {
     pub template_file: String,
     pub file_name: String, 
+
+    pub file_name_without_extention: String,
     pub extention: String,
 
     pub use_explicit_template_file: bool,
@@ -19,7 +21,7 @@ impl ProgramArguments {
         let args = App::new("Template Creation Tool")
                     .version("0.1")
                     .author("Austin Haskell")
-                    .about("This applicatio aids in the creation of files via the command line")
+                    .about("This application aids in the creation of files via the command line")
                     .arg(
                         Arg::with_name("template_file")    
                         .short("t")
@@ -30,14 +32,14 @@ impl ProgramArguments {
                         Arg::with_name("file_name")
                         .short("f")
                         .long("file")
-                        .help("File to create. Extention is used to select template to use unless -t flag is also present")
+                        .help("File to create. Extension is used to select template to use unless -t flag is also present")
                         .takes_value(true)
                         .required(true))
                     .arg(
                         Arg::with_name("overwrite")
                         .short("o")
                         .long("overwrite")
-                        .help("If present, will overwite any file when encountering an already present file. "))
+                        .help("If present, will overwrite any file when encountering an already present file. "))
                     .arg(
                         Arg::with_name("platform")
                         .short("p")
@@ -65,6 +67,7 @@ impl ProgramArguments {
             file_name: file_name.clone(),
             template_file: String::from(template_name),
             extention: String::from(*extention_list.last().unwrap_or(&"")),
+            file_name_without_extention: String::from(*extention_list.first().unwrap_or(&"")),
 
             use_explicit_template_file: args.is_present("template_file"),
             create_matching_header_and_source: args.is_present("matching_headers"),
