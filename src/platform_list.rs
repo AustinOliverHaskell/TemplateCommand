@@ -11,7 +11,7 @@ pub struct PlatformList {
 impl PlatformList {
     pub fn load(path: &String) -> Self {
 
-        let mut platform_list: Vec<String> = Vec::new();
+        let platform_list: Vec<String>;
         let mut possible_file = File::open(path);
         if possible_file.is_err() {
 
@@ -52,13 +52,10 @@ impl PlatformList {
 
     pub fn parse_platforms(file_contents: &String) -> Vec<String>{
         let regex = Regex::new("[A-z]*").unwrap();
-
-        println!("Parsing {:} for platform names", file_contents);
         
         let mut platform_list: Vec<String> = Vec::new();
 
         for _match in regex.captures_iter(file_contents) {
-            println!("Found platform: {:?}", _match);
             let platform_text = _match.get(0).unwrap().as_str();
             platform_list.push(String::from(platform_text));
         }
