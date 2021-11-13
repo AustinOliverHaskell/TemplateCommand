@@ -33,57 +33,76 @@ fn main() {
         if args.use_explicit_template_file {
             println!("Searching for template file {:?}", args.template_file);
         } else {
-            println!("Searching for template file tt.{:}", args.extention);
+            println!("Searching for template file tt.{:}", args.extension);
         }
     }
 
     struct TemplateAndFilenamePair {
-        extention: String,
-        file_name_without_extention: String,
+        extension: String,
+        file_name_without_extension: String,
         file_name: String,
         template_file_name: String
     }
 
     let mut template_list: Vec<TemplateAndFilenamePair> = Vec::new();
 
-    let template_file_name: String;
+    let mut evaluated_extension: Option<String> = None;
+    let mut template_file_name: Option<String> = None;
     if args.use_explicit_template_file {
-        template_file_name = args.template_file.clone();
+        template_file_name = Some(args.template_file.clone());
     } else {
-        template_file_name = format!("tt.{:}", args.extention);
+        for path in &path_list {
+            // I really dont like that this is making a copy on every loop. - Austin Haskell 
+            let result = find_highest_priority_extension_and_file(args.extension_list.clone(), &path);
+            if result.is_none() {
+                continue;
+            }
+    
+            let (highest_priority_extension, highest_priority_template_file_name) = result.unwrap();
+            template_file_name  = Some(highest_priority_template_file_name.clone());
+            evaluated_extension = Some(highest_priority_extension.clone());
+    
+            println!("Highest Priority Extension: {:?} with file {:?}", highest_priority_extension, highest_priority_template_file_name);
+        }
+    }
+
+    if template_file_name.is_none() {
+        println!("Failed to resolve a valid template file for that extension. ");
+        return;
     }
 
     template_list.push( 
         TemplateAndFilenamePair {
-            extention: args.extention.clone(),
-            file_name_without_extention: args.file_name_without_extention.clone(),
+            extension: evaluated_extension.clone().unwrap(),
+            file_name_without_extension: args.file_name_without_extension.clone(),
             file_name: args.file_name.clone(),
-            template_file_name: template_file_name
+            template_file_name: template_file_name.unwrap()
         }
     );
 
+    let evaluated_extension_copy = &evaluated_extension.clone().unwrap(); 
     if args.create_matching_header_and_source && 
-      (args.extention == "cpp" || args.extention == "h") {
+      (evaluated_extension_copy == "cpp" || evaluated_extension_copy == "h") {
 
-        let extention: String;
-        if args.extention == "cpp" {
-            extention = String::from("h");
+        let extension: String;
+        if evaluated_extension_copy == "cpp" {
+            extension = String::from("h");
         } else {
-            extention = String::from("cpp");
+            extension = String::from("cpp");
         }
 
         let template_file_name: String;
         if args.use_explicit_template_file {
             template_file_name = args.template_file.clone();
         } else {
-            template_file_name = format!("tt.{:}", extention);
+            template_file_name = format!("tt.{:}", extension);
         }
 
         template_list.push( 
             TemplateAndFilenamePair {
-                extention: extention.clone(),
-                file_name_without_extention: args.file_name_without_extention.clone(),
-                file_name: args.file_name_without_extention.clone() + "." + &extention,
+                extension: extension.clone(),
+                file_name_without_extension: args.file_name_without_extension.clone(),
+                file_name: args.file_name_without_extension.clone() + "." + &extension,
                 template_file_name: template_file_name
             }
         );
@@ -110,7 +129,7 @@ fn main() {
             let platform_list = PlatformList::load(&platform_list_location);
 
             for platform in platform_list.platforms {
-                output_file_list.push(template.file_name_without_extention.clone() + "_" + &platform + "." + &template.extention);
+                output_file_list.push(template.file_name_without_extension.clone() + "_" + &platform + "." + &template.extension);
             }
         } else {
             output_file_list.push(template.file_name.clone());
@@ -121,12 +140,31 @@ fn main() {
                 println!("Outputting file -> {:}", file);
             }
 
-            let final_file = replace_symbols(&template_file, &file, &template.file_name_without_extention, &template.extention);
+            let final_file = replace_symbols(&template_file, &file, &template.file_name_without_extension, &template.extension);
 
             write_file(&file, &final_file, args.verbose_output, args.overwrite);
         }
     }
 }
 
+fn find_highest_priority_extension_and_file(extension_list: Vec<String>, path_prefix: &String) -> Option<(String, String)> {
 
+    let mut extension_list_copy = extension_list.clone();
+    let mut file_name = String::from(path_prefix) + &String::from("/tt.") + &extension_list.join(".");
+    println!("Checking to see if {:} exists", file_name);
+
+    while !check_if_file_exists(&file_name) {
+        if extension_list_copy.len() == 1 {
+            // No file exists, we just failed the file exists check. 
+            return None;
+        }
+
+        extension_list_copy.remove(0);
+        file_name = String::from(path_prefix) + &String::from("/tt.") + &extension_list_copy.join(".");
+
+        println!("Checking to see if {:} exists", file_name);
+    }
+
+    Some((extension_list_copy.join("."), file_name))
+}
 
