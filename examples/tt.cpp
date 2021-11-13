@@ -1,0 +1,7 @@
+#include "[]PARTNER_FILE[]"
+
+[]FILE_NAME_AS_TYPE[]::[]FILE_NAME_AS_TYPE[]() {
+}
+
+[]FILE_NAME_AS_TYPE[]::~[]FILE_NAME_AS_TYPE[]() {
+}
