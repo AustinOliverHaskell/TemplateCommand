@@ -37,11 +37,29 @@ pub fn create_replacement_value(token: &str, file_name: &String, file_name_witho
                 return file_name_without_extention.clone() + ".h";
             }
         }
-        &_ => {}
+        "[]EXTENSION[]"           => { return extention.clone(); },
+        "[]PARENT_DIR[]"          => { return String::from("[]UNIMPLEMENTED[]"); },
+        "[]PARENT_DIR_AS_TYPE[]"  => { return String::from("[]UNIMPLEMENTED[]"); },
+        "[]CURRENT_DATE[]"        => { return String::from("[]UNIMPLEMENTED[]"); },
+        "[]CURRENT_TIME[]"        => { return String::from("[]UNIMPLEMENTED[]"); },
+        "[]PLATFORM[]"            => { return String::from("[]UNIMPLEMENTED[]"); },
+        "[]LANGUAGE[]"            => { return String::from("[]UNIMPLEMENTED[]"); },
+        "[]ENUMERATION[]"         => { return String::from("[]UNIMPLEMENTED[]"); },
+        "[]USER[]"                => { return String::from("[]UNIMPLEMENTED[]"); }
+        _ => {
+            let replacement_string = create_replacement_value_that_has_variable(token);
+            if replacement_string.is_some() {
+                return replacement_string.unwrap();
+            }
+        }
     }
 
     println!("No match for token {:}", token);
     String::from(token)
+}
+
+pub fn create_replacement_value_that_has_variable(token: &str) -> Option<String> {
+    None
 }
 
 pub fn create_type_from_file_name(file_name: &String) -> String {
