@@ -1,29 +1,40 @@
 use std::fs::{ File, OpenOptions, read_to_string };
 use std::io::Write;
 
-pub fn load_template_file(paths: &Vec<String>, template_file: &String, be_verbose: bool) -> Option<String> {
+pub fn load_template_file_from_multiple_search_paths(paths: &Vec<String>, template_file_name: &String, be_verbose: bool) -> Option<String> {
     
     for path in paths {
-        let template_path: String = String::from(path) + template_file;
 
         if be_verbose {
-            println!("Attempting to load file: {:}", &template_path);
+            println!("Attempting to load file: {:}{:}", path, &template_file_name);
         }
 
-        let possible_template_file_data = read_to_string(&template_path);
-        if possible_template_file_data.is_err() {
+        let template = load_template_file(path, template_file_name, be_verbose);
+        if template.is_none() {
             if be_verbose {
-                println!("{:?} is no good - {:?}", &template_path, possible_template_file_data.unwrap_err());
+                println!("Failed to load template file: {:}{:}", &path, template_file_name);
             }
             continue;
         }
 
-        let template_file_data = possible_template_file_data.unwrap();
-
-        return Some(template_file_data);
+        return Some(template.unwrap());
     }
 
     None
+}
+
+pub fn load_template_file(template_file_dir_path: &String, template_file_name: &String, be_verbose: bool) -> Option<String>{
+
+    let template_path: String = String::from(template_file_dir_path) + template_file_name;
+
+    let possible_template_file_data = read_to_string(&template_path);
+    if possible_template_file_data.is_err() {
+        return None;
+    }
+
+    let template_file_data = possible_template_file_data.unwrap();
+
+    Some(template_file_data)
 }
 
 pub fn write_file(path: &String, file_contents: &String, be_verbose: bool, overwrite: bool) {

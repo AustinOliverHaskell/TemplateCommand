@@ -10,10 +10,17 @@ pub struct ProgramArguments {
     pub extension: String,
 
     pub use_explicit_template_file: bool,
+
     pub create_matching_header_and_source: bool,
     pub create_one_per_platform: bool,
+    pub create_one_per_enumeration: bool,
+    pub create_one_per_language: bool,
+
     pub overwrite: bool,
-    pub verbose_output: bool
+    pub verbose_output: bool,
+    pub write_file_to_screen: bool,
+
+    pub show_documentation: bool,
 }
 
 impl ProgramArguments {
@@ -45,17 +52,37 @@ impl ProgramArguments {
                         Arg::with_name("platform")
                         .short("p")
                         .long("platform")
-                        .help("If present, will create one item per item on the platform list"))
+                        .help("If present, will create one file per item on the platform list"))
+                    .arg(
+                        Arg::with_name("enumeration")
+                        .short("e")
+                        .long("enumeration")
+                        .help("If present, will create one file per item on the enumeration list"))
+                    .arg(
+                        Arg::with_name("language")
+                        .short("l")
+                        .long("language")
+                        .help("If present, will create one file per item on the language list"))
                     .arg(
                         Arg::with_name("matching_headers")
                         .short("m")
                         .long("matching_files")
-                        .help("If present and if applicable, will create a matching source/header file (C family only)")
-                    ).arg(
+                        .help("If present and if applicable, will create a matching source/header file (C family only)"))
+                    .arg(
                         Arg::with_name("verbose")
                         .short("v")
                         .long("verbose")
-                        .help("If present will use verbose output.")
+                        .help("If present will use verbose output."))
+                    .arg(
+                        Arg::with_name("debug")
+                        .short("d")
+                        .long("debug")
+                        .help("If present, will print output to the screen instead of writing to file. "))
+                    .arg(
+                        Arg::with_name("show_documentation")
+                        .short("s")
+                        .long("show_doc")
+                        .help("If present, will print replacement variables and an explanation of what they do. ")
                     ).get_matches();
 
         let file_name = String::from(args.value_of("file_name").unwrap_or(""));
@@ -71,11 +98,18 @@ impl ProgramArguments {
             extension_list: extension_list.iter().map(|str_as_string| String::from(*str_as_string)).collect(),
             file_name_without_extension: String::from(*extension_list.first().unwrap_or(&"")),
 
-            use_explicit_template_file: args.is_present("template_file"),
+            use_explicit_template_file:        args.is_present("template_file"),
             create_matching_header_and_source: args.is_present("matching_headers"),
-            create_one_per_platform: args.is_present("platform"),
-            overwrite: args.is_present("overwrite"),
-            verbose_output: args.is_present("verbose")
+
+            create_one_per_platform:    args.is_present("platform"),
+            create_one_per_enumeration: args.is_present("enumeration"),
+            create_one_per_language:    args.is_present("language"),
+            
+            overwrite:            args.is_present("overwrite"),
+            verbose_output:       args.is_present("verbose"),
+            write_file_to_screen: args.is_present("debug"),
+
+            show_documentation: args.is_present("show_documentation")
         }
     } 
 }

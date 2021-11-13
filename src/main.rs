@@ -1,29 +1,34 @@
 mod program_args;
 mod file_manip;
 mod symbol_replacer;
-mod platform_list;
+mod enumeration_list;
+mod template_file_list;
 
 use program_args::*;
 use file_manip::*;
 use symbol_replacer::*;
-use platform_list::PlatformList;
+use enumeration_list::*;
 
 fn main() {
+
+    let default_platform_list:    Vec<String> = vec![String::from("windows"), String::from("linux")];
+    let default_language_list:    Vec<String> = vec![String::from("en"),      String::from("fr")];
+    let default_enumeration_list: Vec<String> = vec![String::from("a"),       String::from("b")];
 
     #[cfg(windows)]
     let path_list: Vec<String> = vec![
         String::from("C://.templates/")
     ];
 
-    #[cfg(linux)]
+    #[cfg(target_os = "linux")]
     let path_list: Vec<String> = vec![
-        String::from("/home/austinhaskell/.templates/")
+        String::from("/home/austinhaskell/.templates")
     ];
 
     let mut exe_path_buff = std::env::current_exe().unwrap();
     let _ = exe_path_buff.pop();
     let _ = exe_path_buff.push("platform_list.txt");
-    let platform_list_location: String = exe_path_buff.into_os_string().into_string().unwrap();
+    let list_locations: String = exe_path_buff.into_os_string().into_string().unwrap();
 
     let args = ProgramArguments::create();
 
@@ -126,12 +131,25 @@ fn main() {
 
         let mut output_file_list: Vec<String> = Vec::new();
         if args.create_one_per_platform {
-            let platform_list = PlatformList::load(&platform_list_location);
+            let platform_list = EnumerationList::load(&list_locations, &default_platform_list);
 
-            for platform in platform_list.platforms {
+            for platform in platform_list.enumerations {
                 output_file_list.push(template.file_name_without_extension.clone() + "_" + &platform + "." + &template.extension);
             }
-        } else {
+        } else if args.create_one_per_enumeration {
+            let enumeration_list = EnumerationList::load(&list_locations, &default_enumeration_list);
+
+            for enumeration in enumeration_list.enumerations {
+                output_file_list.push(template.file_name_without_extension.clone() + "_" + &enumeration + "." + &template.extension);
+            }
+        } else if args.create_one_per_language {
+            let language_list = EnumerationList::load(&list_locations, &default_language_list);
+
+            for language in language_list.enumerations {
+                output_file_list.push(template.file_name_without_extension.clone() + "_" + &language + "." + &template.extension);
+            }
+        } 
+        else {
             output_file_list.push(template.file_name.clone());
         }
 
@@ -142,7 +160,11 @@ fn main() {
 
             let final_file = replace_symbols(&template_file, &file, &template.file_name_without_extension, &template.extension);
 
-            write_file(&file, &final_file, args.verbose_output, args.overwrite);
+            if args.write_file_to_screen {
+                println!("{:}", final_file);
+            } else {
+                write_file(&file, &final_file, args.verbose_output, args.overwrite);
+            }
         }
     }
 }
