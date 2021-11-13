@@ -5,8 +5,9 @@ pub struct ProgramArguments {
     pub template_file: String,
     pub file_name: String, 
 
-    pub file_name_without_extention: String,
-    pub extention: String,
+    pub file_name_without_extension: String,
+    pub extension_list: Vec<String>,
+    pub extension: String,
 
     pub use_explicit_template_file: bool,
     pub create_matching_header_and_source: bool,
@@ -60,14 +61,15 @@ impl ProgramArguments {
         let file_name = String::from(args.value_of("file_name").unwrap_or(""));
         let template_name = args.value_of("template_file").unwrap_or("");
 
-        let extention_list: Vec<&str> = file_name.split('.').collect();
+        let extension_list: Vec<&str> = file_name.split('.').collect();
         
-
         ProgramArguments {
             file_name: file_name.clone(),
             template_file: String::from(template_name),
-            extention: String::from(*extention_list.last().unwrap_or(&"")),
-            file_name_without_extention: String::from(*extention_list.first().unwrap_or(&"")),
+            
+            extension: String::from(*extension_list.last().unwrap_or(&"")),
+            extension_list: extension_list.iter().map(|str_as_string| String::from(*str_as_string)).collect(),
+            file_name_without_extension: String::from(*extension_list.first().unwrap_or(&"")),
 
             use_explicit_template_file: args.is_present("template_file"),
             create_matching_header_and_source: args.is_present("matching_headers"),
