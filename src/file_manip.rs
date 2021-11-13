@@ -51,10 +51,19 @@ pub fn write_file(path: &String, file_contents: &String, be_verbose: bool, overw
 
     match file.write_all(file_contents.as_bytes()) {
         Err(e) => println!("Failed to write contents of file. Reason: {:}", e),
-        _ => { 
+        _ => {
             if be_verbose {
                 println!("Wrote File!"); 
             }
         }
     }
+}
+
+pub fn check_if_file_exists(file: &String) -> bool {
+    let possible_template_file_data = read_to_string(&file);
+    if possible_template_file_data.is_err() {
+        return false;
+    } 
+
+    true
 }
