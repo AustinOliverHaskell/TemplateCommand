@@ -9,7 +9,6 @@ pub struct EnumerationList {
 }
 
 impl EnumerationList { 
-
     pub fn load(path: &String, defaults: &Vec<String>) -> Self {
 
         let enumeration_list: Vec<String>;

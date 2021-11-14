@@ -1,21 +1,94 @@
 use regex::*;
 
-pub fn replace_symbols(template: &String, file_name: &String, file_name_without_extention: &String, extention: &String) -> String {
-    let regex = Regex::new("\\[\\][A-Z_]+\\[\\]").unwrap();
+use crate::template_file_list::UnprocessedTemplateFile;
 
-    let possible_matches = regex.find(&template);
-    if possible_matches.is_none() {
-        // Nothing to do. 
-        return template.clone(); 
+#[derive(Debug, Clone)]
+pub struct OutputFileDescription {
+    pub name:                   String,
+    pub extension:              String,
+
+    pub enumeration:    Option<String>,
+    pub language:       Option<String>,
+    pub platform:       Option<String>,
+}
+
+impl OutputFileDescription {
+    pub fn name_with_extension(self: &Self) -> String {
+        String::from(self.name_expanded_with_enumerations()) + "." + &self.extension
     }
 
-    let mut processed_template = template.clone();
-    let mut _match = regex.find(&template);
+    pub fn name_expanded_with_enumerations(self: &Self) -> String {
+
+        let mut platform_append: String = String::from("");
+        if self.platform.is_some() {
+            platform_append = String::from("_") + &(self.platform.as_ref().unwrap());
+        }
+
+        let mut language_append: String = String::from("");
+        if self.language.is_some() {
+            language_append = String::from("_") + &(self.language.as_ref().unwrap());
+        }
+
+        let mut enumeration_append: String = String::from("");
+        if self.enumeration.is_some() {
+            enumeration_append = String::from("_") + &(self.enumeration.as_ref().unwrap());
+        }
+
+        String::from(&self.name) + &platform_append + &language_append + &enumeration_append
+    }
+}
+
+pub struct ProcessedTemplateFile {
+    pub data: String
+}
+
+impl ProcessedTemplateFile {
+    pub fn new(unprocessed: &UnprocessedTemplateFile, file_description: &OutputFileDescription) -> Self {
+        let regex = Regex::new("\\[\\][A-Z_]+\\[\\]").unwrap();
+
+        let possible_matches = regex.find(&unprocessed.template_file_data);
+        if possible_matches.is_none() {
+            // Nothing to do. 
+            return ProcessedTemplateFile {
+                data: unprocessed.template_file_data.clone() 
+            }
+        }
+
+        let mut processed_template = unprocessed.template_file_data.clone();
+        let mut _match = regex.find(&unprocessed.template_file_data);
+        while _match.is_some() {
+            let template_start: String = String::from(&processed_template[.._match.unwrap().start()]);
+            let template_end:   String = String::from(&processed_template[_match.unwrap().end()..]);
+
+            let replacement_symbol = create_replacement_value(_match.unwrap().as_str(), file_description);
+
+            processed_template = template_start + &replacement_symbol + &template_end;
+
+            _match = regex.find(&processed_template);
+        }
+
+        ProcessedTemplateFile {
+            data: processed_template
+        }
+    }
+}
+
+pub fn replace_symbols(unprocessed_file: &UnprocessedTemplateFile, output_file_description: &OutputFileDescription) -> String {
+    let regex = Regex::new("\\[\\][A-Z_]+\\[\\]").unwrap();
+
+    let possible_matches = regex.find(&unprocessed_file.template_file_data);
+    if possible_matches.is_none() {
+        // Nothing to do. 
+        return unprocessed_file.template_file_data.clone(); 
+    }
+
+    let mut processed_template = unprocessed_file.template_file_data.clone();
+    let mut _match = regex.find(&unprocessed_file.template_file_data);
     while _match.is_some() {
         let template_start: String = String::from(&processed_template[.._match.unwrap().start()]);
         let template_end:   String = String::from(&processed_template[_match.unwrap().end()..]);
 
-        let replacement_symbol = create_replacement_value(_match.unwrap().as_str(), &file_name, file_name_without_extention, extention);
+        let replacement_symbol = create_replacement_value(_match.unwrap().as_str(), output_file_description);
 
         processed_template = template_start + &replacement_symbol + &template_end;
 
@@ -25,26 +98,28 @@ pub fn replace_symbols(template: &String, file_name: &String, file_name_without_
     processed_template
 }
 
-pub fn create_replacement_value(token: &str, file_name: &String, file_name_without_extention: &String, extention: &String) -> String {
+pub fn create_replacement_value(token: &str, output_file_description: &OutputFileDescription) -> String {
 
     match token {
-        "[]FILE_NAME[]"         => { return file_name.clone(); }
-        "[]FILE_NAME_AS_TYPE[]" => { return create_type_from_file_name(file_name_without_extention); },
+        "[]FILE_NAME[]"         => { return output_file_description.name_with_extension(); }
+        "[]FILE_NAME_AS_TYPE[]" => { return create_type_from_file_name(&output_file_description.name_expanded_with_enumerations()); },
         "[]PARTNER_FILE[]"      => { 
-            if extention == "h" {
-                return file_name_without_extention.clone() + ".cpp"; 
+            if output_file_description.extension == "h" {
+                return output_file_description.name_expanded_with_enumerations() + ".cpp"; 
+            } else if output_file_description.extension == "c" || output_file_description.extension == "cpp"{
+                return output_file_description.name_expanded_with_enumerations() + ".h";
             } else {
-                return file_name_without_extention.clone() + ".h";
+                return String::from("NO PARTNER FILE");
             }
         }
-        "[]EXTENSION[]"           => { return extention.clone(); },
+        "[]EXTENSION[]"           => { return output_file_description.extension.clone(); },
         "[]PARENT_DIR[]"          => { return String::from("[]UNIMPLEMENTED[]"); },
         "[]PARENT_DIR_AS_TYPE[]"  => { return String::from("[]UNIMPLEMENTED[]"); },
-        "[]CURRENT_DATE[]"        => { return String::from("[]UNIMPLEMENTED[]"); },
-        "[]CURRENT_TIME[]"        => { return String::from("[]UNIMPLEMENTED[]"); },
-        "[]PLATFORM[]"            => { return String::from("[]UNIMPLEMENTED[]"); },
-        "[]LANGUAGE[]"            => { return String::from("[]UNIMPLEMENTED[]"); },
-        "[]ENUMERATION[]"         => { return String::from("[]UNIMPLEMENTED[]"); },
+        "[]CURRENT_DATE[]"        => { return get_current_date(); },
+        "[]CURRENT_TIME[]"        => { return get_current_time(); },
+        "[]PLATFORM[]"            => { return replace_if_not_none("[]PLATFORM[]",    &output_file_description.platform);    },
+        "[]LANGUAGE[]"            => { return replace_if_not_none("[]LANGUAGE[]",    &output_file_description.language);    },
+        "[]ENUMERATION[]"         => { return replace_if_not_none("[]ENUMERATION[]", &output_file_description.enumeration); },
         "[]USER[]"                => { return String::from("[]UNIMPLEMENTED[]"); }
         _ => {
             let replacement_string = create_replacement_value_that_has_variable(token);
@@ -55,11 +130,19 @@ pub fn create_replacement_value(token: &str, file_name: &String, file_name_witho
     }
 
     println!("No match for token {:}", token);
-    String::from(token)
+    String::from("ERR")
 }
 
 pub fn create_replacement_value_that_has_variable(token: &str) -> Option<String> {
     None
+}
+
+fn replace_if_not_none(default: &str, replacement_val: &Option<String>) -> String {
+    if replacement_val.is_none() {
+        return String::from(default);
+    }
+
+    replacement_val.clone().unwrap()
 }
 
 pub fn create_type_from_file_name(file_name: &String) -> String {
@@ -88,3 +171,18 @@ pub fn create_type_from_file_name(file_name: &String) -> String {
     type_name
 }
 
+pub fn get_current_time() -> String {
+    use chrono::prelude::*;
+
+    let local: DateTime<Local> = Local::now();
+
+    local.time().format("%H:%M").to_string()
+}
+
+pub fn get_current_date() -> String {
+    use chrono::prelude::*;
+
+    let local: DateTime<Local> = Local::now();
+
+    local.date().format("%m-%d-%Y").to_string()
+}

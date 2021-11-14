@@ -18,7 +18,9 @@ pub struct ProgramArguments {
 
     pub overwrite: bool,
     pub verbose_output: bool,
+
     pub write_file_to_screen: bool,
+    pub write_names_of_files_to_screen: bool,
 
     pub show_documentation: bool,
 }
@@ -79,10 +81,15 @@ impl ProgramArguments {
                         .long("debug")
                         .help("If present, will print output to the screen instead of writing to file. "))
                     .arg(
+                        Arg::with_name("list_names")
+                        .short("n")
+                        .long("list_names")
+                        .help("If present, will print the names of the output files without writing the actual files."))
+                    .arg(
                         Arg::with_name("show_documentation")
                         .short("s")
                         .long("show_doc")
-                        .help("If present, will print replacement variables and an explanation of what they do. ")
+                        .help("(NOT IMPLEMENTED, SEE README FOR DOC) If present, will print replacement variables and an explanation of what they do. ")
                     ).get_matches();
 
         let file_name = String::from(args.value_of("file_name").unwrap_or(""));
@@ -107,7 +114,9 @@ impl ProgramArguments {
             
             overwrite:            args.is_present("overwrite"),
             verbose_output:       args.is_present("verbose"),
+
             write_file_to_screen: args.is_present("debug"),
+            write_names_of_files_to_screen: args.is_present("list_names"),
 
             show_documentation: args.is_present("show_documentation")
         }

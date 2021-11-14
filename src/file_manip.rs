@@ -1,14 +1,11 @@
 use std::fs::{ File, OpenOptions, read_to_string };
 use std::io::Write;
 
+use crate::platform_specific::PLATFORM_SEPARATOR_SLASH;
+
 pub fn load_template_file_from_multiple_search_paths(paths: &Vec<String>, template_file_name: &String, be_verbose: bool) -> Option<String> {
     
     for path in paths {
-
-        if be_verbose {
-            println!("Attempting to load file: {:}{:}", path, &template_file_name);
-        }
-
         let template = load_template_file(path, template_file_name, be_verbose);
         if template.is_none() {
             if be_verbose {
@@ -25,10 +22,15 @@ pub fn load_template_file_from_multiple_search_paths(paths: &Vec<String>, templa
 
 pub fn load_template_file(template_file_dir_path: &String, template_file_name: &String, be_verbose: bool) -> Option<String>{
 
-    let template_path: String = String::from(template_file_dir_path) + template_file_name;
+    let template_path: String = String::from(template_file_dir_path) + PLATFORM_SEPARATOR_SLASH + template_file_name;
+
+    if be_verbose {
+        println!("Attempting to load template file: {:}", template_path);
+    }
 
     let possible_template_file_data = read_to_string(&template_path);
     if possible_template_file_data.is_err() {
+        println!("Failed to load template file. Reason: {:}", possible_template_file_data.unwrap_err());
         return None;
     }
 

@@ -1,13 +1,14 @@
 use crate::file_manip::*;
+use crate::platform_specific::PLATFORM_SEPARATOR_SLASH;
 
-pub struct UnprocessedOutputFile {
-    pub file_name: String,
-    pub extension: String,
+#[derive(Debug)]
+pub struct UnprocessedTemplateFile {
+    pub template_file_extension: String, 
     pub template_file_path: String, 
     pub template_file_data: String
 }
 
-impl UnprocessedOutputFile {
+impl UnprocessedTemplateFile {
     pub fn new(
         extension_list: &Vec<String>, 
         root_path: &String, 
@@ -15,7 +16,6 @@ impl UnprocessedOutputFile {
         output_extension: &String, 
         be_verbose: bool) 
     -> Option<Self> {
-
 
         let found_template_file_matching_extension = figure_out_which_template_to_use(extension_list, root_path, be_verbose);
         if found_template_file_matching_extension.is_none() {
@@ -27,13 +27,12 @@ impl UnprocessedOutputFile {
         let template_file_path: String = String::from("tt.") + &template_file_extension;
         let template_file_data         = load_template_file(root_path, &template_file_path, be_verbose);
         if template_file_data.is_none() {
-            println!("Failed to load template file {:}");
+            println!("Failed to load template file {:}", template_file_path);
+            return None;
         }
 
-        Some(UnprocessedOutputFile {
-            file_name: output_file_name.clone(),
-            extension: output_extension.clone(),
-
+        Some(UnprocessedTemplateFile {
+            template_file_extension: template_file_extension.clone(),
             template_file_path: root_path.clone() + "tt." + &template_file_extension,
             template_file_data: template_file_data.unwrap()
         })
@@ -43,7 +42,8 @@ impl UnprocessedOutputFile {
 pub fn figure_out_which_template_to_use(extension_list: &Vec<String>, root_path: &String, be_verbose: bool) -> Option<String> {
 
     let mut extension_list_copy = extension_list.clone();
-    let mut file_name = String::from(root_path) + &String::from("/tt.") + &extension_list.join(".");
+
+    let mut file_name = String::from(root_path) + PLATFORM_SEPARATOR_SLASH + &String::from("tt.") + &extension_list.join(".");
 
     if be_verbose {
         println!("Checking to see if {:} exists", file_name);
@@ -56,9 +56,11 @@ pub fn figure_out_which_template_to_use(extension_list: &Vec<String>, root_path:
         }
     
         extension_list_copy.remove(0);
-        file_name = String::from(root_path) + &String::from("/tt.") + &extension_list_copy.join(".");
+        file_name = String::from(root_path) + PLATFORM_SEPARATOR_SLASH + &String::from("tt.") + &extension_list_copy.join(".");
     
-        println!("Checking to see if {:} exists", file_name);
+        if be_verbose {
+            println!("Checking to see if {:} exists", file_name);
+        }
     }
     
     Some(extension_list_copy.join("."))

@@ -3,11 +3,16 @@ mod file_manip;
 mod symbol_replacer;
 mod enumeration_list;
 mod template_file_list;
+mod platform_specific;
+mod command_line_documentation;
 
 use program_args::*;
 use file_manip::*;
 use symbol_replacer::*;
 use enumeration_list::*;
+use template_file_list::*;
+use command_line_documentation::print_all_variables;
+use platform_specific::PLATFORM_SEPARATOR_SLASH;
 
 fn main() {
 
@@ -15,178 +20,168 @@ fn main() {
     let default_language_list:    Vec<String> = vec![String::from("en"),      String::from("fr")];
     let default_enumeration_list: Vec<String> = vec![String::from("a"),       String::from("b")];
 
-    #[cfg(windows)]
-    let path_list: Vec<String> = vec![
-        String::from("C://.templates/")
-    ];
-
-    #[cfg(target_os = "linux")]
-    let path_list: Vec<String> = vec![
-        String::from("/home/austinhaskell/.templates")
-    ];
-
     let mut exe_path_buff = std::env::current_exe().unwrap();
     let _ = exe_path_buff.pop();
-    let _ = exe_path_buff.push("platform_list.txt");
-    let list_locations: String = exe_path_buff.into_os_string().into_string().unwrap();
+    let exe_location:      String = exe_path_buff.into_os_string().into_string().unwrap();
+    let template_dir_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "templates";
 
     let args = ProgramArguments::create();
 
-    if args.verbose_output {
-        println!("Using verbose output. ");
-
-        if args.use_explicit_template_file {
-            println!("Searching for template file {:?}", args.template_file);
-        } else {
-            println!("Searching for template file tt.{:}", args.extension);
-        }
-    }
-
-    struct TemplateAndFilenamePair {
-        extension: String,
-        file_name_without_extension: String,
-        file_name: String,
-        template_file_name: String
-    }
-
-    let mut template_list: Vec<TemplateAndFilenamePair> = Vec::new();
-
-    let mut evaluated_extension: Option<String> = None;
-    let mut template_file_name: Option<String> = None;
-    if args.use_explicit_template_file {
-        template_file_name = Some(args.template_file.clone());
-    } else {
-        for path in &path_list {
-            // I really dont like that this is making a copy on every loop. - Austin Haskell 
-            let result = find_highest_priority_extension_and_file(args.extension_list.clone(), &path);
-            if result.is_none() {
-                continue;
-            }
-    
-            let (highest_priority_extension, highest_priority_template_file_name) = result.unwrap();
-            template_file_name  = Some(highest_priority_template_file_name.clone());
-            evaluated_extension = Some(highest_priority_extension.clone());
-    
-            println!("Highest Priority Extension: {:?} with file {:?}", highest_priority_extension, highest_priority_template_file_name);
-        }
-    }
-
-    if template_file_name.is_none() {
-        println!("Failed to resolve a valid template file for that extension. ");
+    if args.show_documentation {
+        print_all_variables();
         return;
     }
 
-    template_list.push( 
-        TemplateAndFilenamePair {
-            extension: evaluated_extension.clone().unwrap(),
-            file_name_without_extension: args.file_name_without_extension.clone(),
-            file_name: args.file_name.clone(),
-            template_file_name: template_file_name.unwrap()
-        }
+    if args.verbose_output {
+        println!("Using verbose output. ");
+    }
+
+    let template_file = UnprocessedTemplateFile::new(&args.extension_list, &template_dir_path, &args.file_name, &args.extension, args.verbose_output);
+    if template_file.is_none() {
+        return;
+    }
+    let template_file = template_file.unwrap();
+
+    let platform_list:    Vec<String>;
+    if args.create_one_per_platform {
+        let platform_list_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "platform_list.txt";
+        platform_list = EnumerationList::load(&platform_list_path, &default_platform_list).enumerations;
+    } else {
+        platform_list = Vec::new();
+    }
+
+    let language_list:    Vec<String>;
+    if args.create_one_per_language {
+        let language_list_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "language_list.txt";
+        language_list = EnumerationList::load(&language_list_path, &default_language_list).enumerations;
+    } else {
+        language_list = Vec::new();
+    }
+
+    let enumeration_list: Vec<String>;
+    if args.create_one_per_enumeration {
+        let enumeration_list_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "enumeration_list.txt";
+        enumeration_list = EnumerationList::load(&enumeration_list_path, &default_enumeration_list).enumerations;
+    } else {
+        enumeration_list = Vec::new();
+    }
+
+    let output_file_description = OutputFileDescription {
+        name: args.file_name_without_extension.clone(),
+        extension: args.extension.clone(),
+
+        platform:    None,
+        language:    None, 
+        enumeration: None
+    };
+
+    let mut output_file_list: Vec<OutputFileDescription> = Vec::new();
+    output_file_list.push(output_file_description.clone());
+
+    let mut expanded_list = expand_with_enumerations(
+        &output_file_list, 
+        &platform_list, 
+        &language_list, 
+        &enumeration_list
     );
 
-    let evaluated_extension_copy = &evaluated_extension.clone().unwrap(); 
-    if args.create_matching_header_and_source && 
-      (evaluated_extension_copy == "cpp" || evaluated_extension_copy == "h") {
-
-        let extension: String;
-        if evaluated_extension_copy == "cpp" {
-            extension = String::from("h");
-        } else {
-            extension = String::from("cpp");
-        }
-
-        let template_file_name: String;
-        if args.use_explicit_template_file {
-            template_file_name = args.template_file.clone();
-        } else {
-            template_file_name = format!("tt.{:}", extension);
-        }
-
-        template_list.push( 
-            TemplateAndFilenamePair {
-                extension: extension.clone(),
-                file_name_without_extension: args.file_name_without_extension.clone(),
-                file_name: args.file_name_without_extension.clone() + "." + &extension,
-                template_file_name: template_file_name
-            }
-        );
+    if args.create_matching_header_and_source {
+        expanded_list = expand_with_matching_files(&expanded_list); 
     }
 
-    for template in template_list {
-        let possible_template = load_template_file(&path_list, &template.template_file_name, args.verbose_output);
-        if possible_template.is_none() {
-            println!("Failed to find template file for {:}", template.template_file_name.clone());
-            return;
+    if args.write_names_of_files_to_screen {
+        for file in expanded_list {
+            println!("{:}", file.name_with_extension());
         }
-
-        let template_file = possible_template.unwrap().clone();
-
-        if args.verbose_output {
-            println!("Using the following template before processing: ");
-            println!(" ---------- ");
-            println!("{:}", &template_file);
-            println!(" ---------- ");
-        }
-
-        let mut output_file_list: Vec<String> = Vec::new();
-        if args.create_one_per_platform {
-            let platform_list = EnumerationList::load(&list_locations, &default_platform_list);
-
-            for platform in platform_list.enumerations {
-                output_file_list.push(template.file_name_without_extension.clone() + "_" + &platform + "." + &template.extension);
-            }
-        } else if args.create_one_per_enumeration {
-            let enumeration_list = EnumerationList::load(&list_locations, &default_enumeration_list);
-
-            for enumeration in enumeration_list.enumerations {
-                output_file_list.push(template.file_name_without_extension.clone() + "_" + &enumeration + "." + &template.extension);
-            }
-        } else if args.create_one_per_language {
-            let language_list = EnumerationList::load(&list_locations, &default_language_list);
-
-            for language in language_list.enumerations {
-                output_file_list.push(template.file_name_without_extension.clone() + "_" + &language + "." + &template.extension);
-            }
-        } 
-        else {
-            output_file_list.push(template.file_name.clone());
-        }
-
-        for file in output_file_list {
-            if args.verbose_output {
-                println!("Outputting file -> {:}", file);
-            }
-
-            let final_file = replace_symbols(&template_file, &file, &template.file_name_without_extension, &template.extension);
-
-            if args.write_file_to_screen {
-                println!("{:}", final_file);
-            } else {
-                write_file(&file, &final_file, args.verbose_output, args.overwrite);
-            }
+        return;
+    }
+    
+    for file in expanded_list {
+        let processed_file = replace_symbols(&template_file, &file);
+        if args.write_file_to_screen {
+            println!("----- {:} -----", file.name_with_extension());
+            println!("{:}", processed_file);
+        } else {
+            let file_name = file.name_with_extension();
+    
+            write_file(&file_name, &processed_file, args.verbose_output, args.overwrite);
         }
     }
 }
 
-fn find_highest_priority_extension_and_file(extension_list: Vec<String>, path_prefix: &String) -> Option<(String, String)> {
+fn expand_with_enumerations(
+    output_file_list: &Vec<OutputFileDescription>, 
+    platform_list: &Vec<String>, 
+    language_list: &Vec<String>, 
+    enumeration_list: &Vec<String>) -> Vec<OutputFileDescription> {
+    
+    let mut results: Vec<OutputFileDescription>;
 
-    let mut extension_list_copy = extension_list.clone();
-    let mut file_name = String::from(path_prefix) + &String::from("/tt.") + &extension_list.join(".");
-    println!("Checking to see if {:} exists", file_name);
+    let mut files_with_platform: Vec<OutputFileDescription> = Vec::new();
+    for file in output_file_list {
+        for platform in platform_list {
+            let mut output_file = file.clone();
 
-    while !check_if_file_exists(&file_name) {
-        if extension_list_copy.len() == 1 {
-            // No file exists, we just failed the file exists check. 
-            return None;
+            output_file.platform = Some(platform.clone());
+
+            files_with_platform.push(output_file);
         }
-
-        extension_list_copy.remove(0);
-        file_name = String::from(path_prefix) + &String::from("/tt.") + &extension_list_copy.join(".");
-
-        println!("Checking to see if {:} exists", file_name);
     }
 
-    Some((extension_list_copy.join("."), file_name))
+    if files_with_platform.is_empty() {
+        results = output_file_list.clone();
+    } else {
+        results = files_with_platform;
+    }
+
+    let mut files_with_language: Vec<OutputFileDescription> = Vec::new();
+    for file in &results {
+        for language in language_list {
+            let mut output_file = file.clone();
+
+            output_file.language = Some(language.clone());
+
+            files_with_language.push(output_file);
+        }
+    }
+
+    if !files_with_language.is_empty() {
+        results = files_with_language;
+    }
+
+    let mut files_with_enumeration: Vec<OutputFileDescription> = Vec::new();
+    for file in &results {
+        for enumeration in enumeration_list {
+            let mut output_file = file.clone();
+
+            output_file.enumeration = Some(enumeration.clone());
+
+            files_with_enumeration.push(output_file);
+        }
+    }
+
+    if !files_with_enumeration.is_empty() {
+        results = files_with_enumeration;
+    }
+
+    results
 }
 
+fn expand_with_matching_files(output_file_list: &Vec<OutputFileDescription>) -> Vec<OutputFileDescription> {
+    let mut results: Vec<OutputFileDescription> = Vec::new();
+
+    for file in output_file_list {
+        results.push(file.clone());
+        if file.extension == "cpp" || file.extension == "c" {
+            let mut matching_file = file.clone();
+            matching_file.extension = String::from("h");
+            results.push(matching_file);
+        } else if file.extension == "h" {
+            let mut matching_file = file.clone();
+            matching_file.extension = String::from("cpp");
+            results.push(matching_file);
+        }
+    }
+
+    results
+}
