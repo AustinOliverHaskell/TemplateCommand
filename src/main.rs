@@ -36,6 +36,11 @@ fn main() {
         println!("Using verbose output. ");
     }
 
+    if args.create_blank {
+        write_file(&args.file_name, &String::from(""), args.verbose_output, args.overwrite);
+        return;
+    }
+
     let template_file = UnprocessedTemplateFile::new(&args.extension_list, &template_dir_path, &args.file_name, &args.extension, args.verbose_output);
     if template_file.is_none() {
         return;

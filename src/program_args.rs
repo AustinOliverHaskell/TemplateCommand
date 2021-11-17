@@ -15,6 +15,7 @@ pub struct ProgramArguments {
     pub create_one_per_platform: bool,
     pub create_one_per_enumeration: bool,
     pub create_one_per_language: bool,
+    pub create_blank: bool,
 
     pub overwrite: bool,
     pub verbose_output: bool,
@@ -50,6 +51,11 @@ impl ProgramArguments {
                         .short("o")
                         .long("overwrite")
                         .help("If present, will overwrite any file when encountering an already present file. "))
+                    .arg(
+                        Arg::with_name("blank")
+                        .short("b")
+                        .long("blank")
+                        .help("If present, will create a blank file with the file name specified instead of use a template. This flag does not respect -l -e and -p."))
                     .arg(
                         Arg::with_name("platform")
                         .short("p")
@@ -111,6 +117,7 @@ impl ProgramArguments {
             create_one_per_platform:    args.is_present("platform"),
             create_one_per_enumeration: args.is_present("enumeration"),
             create_one_per_language:    args.is_present("language"),
+            create_blank:               args.is_present("blank"),
             
             overwrite:            args.is_present("overwrite"),
             verbose_output:       args.is_present("verbose"),
