@@ -1,21 +1,16 @@
 pub fn print_all_variables() {
     let variable_name_list = vec![
         "FILE_NAME_AS_TYPE", 
-        "", 
-        "", 
-        "", 
-        "", 
-        "", 
-        "", 
-        "", 
-        "", 
-        "", 
-        "", 
-        "", 
-        "", 
-        "", 
-        "", 
-        ""
+        "FILE_NAME", 
+        "EXTENSION", 
+        "PARENT_DIR", 
+        "PARENT_DIR{}", 
+        "PLATFORM", 
+        "ENUMERATION", 
+        "LANGUAGE", 
+        "CURRENT_DATE", 
+        "CURRENT_TIME", 
+        "PARTNER_FILE"
         ];
 
     for variable in variable_name_list {
@@ -35,37 +30,31 @@ pub fn print_variable(var_name: &str) {
             println!("EXTENSION -> Evaluates to the right most extension of whatever is passed to -f. If there is no extension, this \
             evaluates to the same thing as FILE_NAME")
         },
-        "PARENT_DIR" => {
+        /*"PARENT_DIR" => {
             println!("PARENT_DIR -> Evaluates to the name of the parent directory from which the file will be generated to.")
         },
         "PARENT_DIR{}" => {
             println!("PARENT_DIR{{}} -> Evaluates to the name of the parent directory from which the file will be generated to. \
             This command will traverse up the directory tee an integer number up steps according to what is in the {{}}")
+        },*/
+        "PLATFORM" => {
+            println!("PLATFORM -> Places the platform name from the platform list for this file")
         },
-        "FILE_NAME_AS_TYPE" => {
-            println!("FILE_NAME_AS_TYPE -> Uses whatever is passed to the -f flag without the extension, formatted to Pascal case")
+        "ENUMERATION" => {
+            println!("ENUMERATION -> Places the enumeration name from the enumeration list for this file")
         },
-        "FILE_NAME_AS_TYPE" => {
-            println!("FILE_NAME_AS_TYPE -> Uses whatever is passed to the -f flag without the extension, formatted to Pascal case")
+        "LANGUAGE" => {
+            println!("LANGUAGE -> Places the language name from the language list for this file")
         },
-        "FILE_NAME_AS_TYPE" => {
-            println!("FILE_NAME_AS_TYPE -> Uses whatever is passed to the -f flag without the extension, formatted to Pascal case")
+        "CURRENT_DATE" => {
+            println!("CURRENT_DATE -> Uses the current date in mm-dd-yyyy formatting")
         },
-        "FILE_NAME_AS_TYPE" => {
-            println!("FILE_NAME_AS_TYPE -> Uses whatever is passed to the -f flag without the extension, formatted to Pascal case")
+        "CURRENT_TIME" => {
+            println!("CURRENT_TIME -> Uses the current time in hh:mm formatting")
         },
-        "FILE_NAME_AS_TYPE" => {
-            println!("FILE_NAME_AS_TYPE -> Uses whatever is passed to the -f flag without the extension, formatted to Pascal case")
-        },
-        "FILE_NAME_AS_TYPE" => {
-            println!("FILE_NAME_AS_TYPE -> Uses whatever is passed to the -f flag without the extension, formatted to Pascal case")
-        },
-        "FILE_NAME_AS_TYPE" => {
-            println!("FILE_NAME_AS_TYPE -> Uses whatever is passed to the -f flag without the extension, formatted to Pascal case")
-        },
-        "FILE_NAME_AS_TYPE" => {
-            println!("FILE_NAME_AS_TYPE -> Uses whatever is passed to the -f flag without the extension, formatted to Pascal case")
-        },
+        "PARTNER_FILE" => {
+            println!("PARTNER_FILE -> Evaluates to a companion file name if the file is in the c family. my_file.cpp will evaluate this to my_file.h")
+        }
         _ => {}
     }
 }

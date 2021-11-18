@@ -45,7 +45,7 @@ impl ProgramArguments {
                         .long("file")
                         .help("File to create. Extension is used to select template to use unless -t flag is also present")
                         .takes_value(true)
-                        .required(true))
+                        .required_unless("show_documentation"))
                     .arg(
                         Arg::with_name("overwrite")
                         .short("o")
