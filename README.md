@@ -1,37 +1,47 @@
-<h1>NOTE: MOST OF THIS IS NOT IMPLEMENTED</h1>
-
 # TemplateCommand (tt)
-Command line utility for creating source files from a set of templates. 
+Command line utility for creating source files from a set of templates. Template files can have various variables defined that get evaluated when creating a new file. 
 
 # Flags
 
->-f, --file
+>-b, --blank
 
-File name to create. The extension on the filename determines which template file to use. 
+Uses -f and creates the file but does not fill it with data. Equivalent to the touch command on linux. 
 
->-t, --template
+>-d, --debug 
 
-Specifies a template file to use. 
-
->-m, --matching_file
-
-If applicable, creates a matching file for whatever extension is used. A .cpp file will generate a corresponding .h file
-
->-p, --platform
-
-Creates one file with each value in the platform enumeration file appended onto it. 
-
->-l, --language
-
-Creates one file with each value in the language enumeration file appended onto it. 
+Prints what will be contained in the template rather than saving it to the file system. 
 
 >-e, --enumeration
 
 Creates one file with each value in the enumeration file appended onto it. 
 
->-d, --debug 
+>-h, --help
 
-Prints what will be contained in the template rather than saving it to the file system. 
+Displays a help dialog with this information. 
+
+>-l, --language
+
+Creates one file with each value in the language enumeration file appended onto it. 
+
+>-n, --names
+
+Will print the names of the output files without showing their content or writing the files to disk
+
+>-m, --matching_file
+
+If applicable, creates a matching file for whatever extension is used. A .cpp file will generate a corresponding .h file
+
+>-o, --overwrite
+
+If present, will overwrite any files with the same name as the generated files. 
+
+>-p, --platform
+
+Creates one file with each value in the platform enumeration file appended onto it. 
+
+>-s, --show_doc
+
+Shows all implemented variables and what they evaluate to. 
 
 >-V, --version
 
@@ -41,13 +51,15 @@ Prints the version information.
 
 Turns on verbose mode. You'll get any debug statements I left in here, so do with that what you will. 
 
->-h, --help
+# Options
 
-Displays a help dialog with this information. 
+>-f, --file
 
->-o, --overwrite
+File name to create. The extension on the filename determines which template file to use. 
 
-If present, will overwrite any files with the same name as the generated files. 
+>-t, --template
+
+Specifies a template file to use.
 
 # Configuration Files
 
@@ -87,14 +99,6 @@ Evaluates to the right most extension of whatever is passed to -f. If there is n
 
 Evaluates to the name of the parent directory from which the file will be generated to.
 
->\[\]PARENT_DIR{}\[\]
-
-Evaluates to the name of the parent directory from which the file will be generated to. This command will traverse up the directory tee an integer number up steps according to what is in the "{}"
-
->\[\]PARENT_DIR_AS_TYPE\[\]
-
-Evaluates to the name of the parent directory from which the file will be generated to but following whatever type formatting you have specified. 
-
 >\[\]PARTNER_FILE\[\]
 
 Only used currently when either a c, cpp, h file is created. Generates the opposite file type. 
@@ -107,17 +111,9 @@ Note: This variable will be skipped if -m is not present.
 
 Evaluates to the current date in dd-mm-yyyy formatting. 
 
->\[\]CURRENT_DATE{}\[\]
-
-Evaluates to the current date. Uses whatever is between the "{}" as the format string.  
-
 >\[\]CURRENT_TIME\[\]
 
 Evaluates to the current date in hh:mm formatting. 
-
->\[\]CURRENT_TIME{}\[\]
-
-Evaluates to the current date. Uses whatever is between the "{}" as the format string. 
 
 >\[\]PLATFORM\[\]
 
@@ -137,18 +133,37 @@ Evaluates to the user defined enumeration name taken from the user defined  enum
 
 Note: This variable will be skipped without the -e flag. 
 
->\[\]USER_DEF{}\[\]
-
-Searches the user definition file for a variable named the same as whatever is in the "{}". If no match is found this variable will be skipped. 
-
->\[\]ENV{}\[\]
-
-Searches the users path for a variable named the same as whatever is in the "{}". If no match is found this variable will be skipped. 
-
->\[\]USER\[\]
-
-Evaluates to the name of the currently logged on user. 
-
 # Example Templates
-<h3>Example C Template File</h3>
-<h3>Example Rust Template File</h3>
+<h3>Example C++ Template File</h3>
+<br />
+
+.cpp file 
+
+```C++
+// Created on []CURRENT_DATE[]
+
+#pragma once
+
+#include "[]PARTNER_FILE[]"
+
+[]FILE_NAME_AS_TYPE[]::[FILE_NAME_AS_TYPE]() {
+
+}
+
+[]FILE_NAME_AS_TYPE[]::~[]FILE_NAME_AS_TYPE[]() {
+
+}
+```
+
+.h file 
+
+```C++
+#pragma once
+
+class []FILE_NAME_AS_TYPE[] {
+    public:
+        []FILE_NAME_AS_TYPE[]()  {};
+        ~[]FILE_NAME_AS_TYPE[]() {};
+    private:
+};
+```
