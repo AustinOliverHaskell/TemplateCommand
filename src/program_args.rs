@@ -30,7 +30,7 @@ impl ProgramArguments {
     pub fn create() -> Self {
 
         let args = App::new("Template Creation Tool")
-                    .version("0.1")
+                    .version("1.0")
                     .author("Austin Haskell")
                     .about("This application aids in the creation of files via the command line")
                     .arg(
