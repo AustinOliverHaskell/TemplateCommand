@@ -5,12 +5,14 @@ mod enumeration_list;
 mod template_file_list;
 mod platform_specific;
 mod command_line_documentation;
+mod output_file_description;
 
 use program_args::*;
 use file_manip::*;
 use symbol_replacer::*;
 use enumeration_list::*;
 use template_file_list::*;
+use output_file_description::*;
 use command_line_documentation::print_all_variables;
 use platform_specific::PLATFORM_SEPARATOR_SLASH;
 
@@ -189,4 +191,26 @@ fn expand_with_matching_files(output_file_list: &Vec<OutputFileDescription>) -> 
     }
 
     results
+}
+
+#[test]
+pub fn matching_file_name_generation_c_to_h() {
+
+    let base_output_description = OutputFileDescription {
+        name: String::from("my_test_file"),
+        extension: String::from("h"),
+
+        enumeration: None,
+        platform: None,
+        language: None
+    };
+
+    let expected_output = vec![base_output_description.clone()];
+    let mut expected_matching_file = base_output_description.clone();
+    expected_matching_file.extension = String::from("cpp");
+
+    let actual_output = expand_with_matching_files(&expected_output);
+    expected_output.push(expected_matching_file);
+
+    assert_eq!(actual_output, expected_output);
 }
