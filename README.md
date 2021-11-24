@@ -133,6 +133,18 @@ Evaluates to the user defined enumeration name taken from the user defined  enum
 
 Note: This variable will be skipped without the -e flag. 
 
+>\[\]USER\[\]
+
+Evaluates to the name of the currently logged in user.
+
+>\[\]OS\[\]
+
+Evaluates to the name of the currently running OS.
+
+>\[\]DEVICE_NAME\[\]
+
+Evaluates to the friendly name of the device. This is the same as what shows when pairing the device via bluetooth. 
+
 # Example Templates
 <h3>Example C++ Template File</h3>
 <br />
