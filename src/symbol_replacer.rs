@@ -3,41 +3,6 @@ use regex::*;
 use crate::template_file_list::UnprocessedTemplateFile;
 use crate::output_file_description::OutputFileDescription;
 
-pub struct ProcessedTemplateFile {
-    pub data: String
-}
-
-impl ProcessedTemplateFile {
-    pub fn new(unprocessed: &UnprocessedTemplateFile, file_description: &OutputFileDescription) -> Self {
-        let regex = Regex::new("\\[\\][A-Z_]+\\[\\]").unwrap();
-
-        let possible_matches = regex.find(&unprocessed.template_file_data);
-        if possible_matches.is_none() {
-            // Nothing to do. 
-            return ProcessedTemplateFile {
-                data: unprocessed.template_file_data.clone() 
-            }
-        }
-
-        let mut processed_template = unprocessed.template_file_data.clone();
-        let mut _match = regex.find(&unprocessed.template_file_data);
-        while _match.is_some() {
-            let template_start: String = String::from(&processed_template[.._match.unwrap().start()]);
-            let template_end:   String = String::from(&processed_template[_match.unwrap().end()..]);
-
-            let replacement_symbol = create_replacement_value(_match.unwrap().as_str(), file_description);
-
-            processed_template = template_start + &replacement_symbol + &template_end;
-
-            _match = regex.find(&processed_template);
-        }
-
-        ProcessedTemplateFile {
-            data: processed_template
-        }
-    }
-}
-
 pub fn replace_symbols(unprocessed_file: &UnprocessedTemplateFile, output_file_description: &OutputFileDescription) -> String {
     let regex = Regex::new("\\[\\][A-Z_]+\\[\\]").unwrap();
 
@@ -85,7 +50,9 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
         "[]PLATFORM[]"            => { return replace_if_not_none("[]PLATFORM[]",    &output_file_description.platform);    },
         "[]LANGUAGE[]"            => { return replace_if_not_none("[]LANGUAGE[]",    &output_file_description.language);    },
         "[]ENUMERATION[]"         => { return replace_if_not_none("[]ENUMERATION[]", &output_file_description.enumeration); },
-        "[]USER[]"                => { return String::from("[]UNIMPLEMENTED[]"); }
+        "[]USER[]"                => { return whoami::username(); },
+        "[]OS[]"                  => { return whoami::distro(); },
+        "[]DEVICE_NAME[]"         => { return whoami::devicename(); },
         _ => {
             let replacement_string = create_replacement_value_that_has_variable(token);
             if replacement_string.is_some() {

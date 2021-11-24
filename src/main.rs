@@ -43,7 +43,7 @@ fn main() {
         return;
     }
 
-    let template_file = UnprocessedTemplateFile::new(&args.extension_list, &template_dir_path, &args.file_name, &args.extension, args.verbose_output);
+    let template_file = UnprocessedTemplateFile::new(&args.extension_list, &template_dir_path, args.verbose_output);
     if template_file.is_none() {
         return;
     }
@@ -116,101 +116,3 @@ fn main() {
     }
 }
 
-fn expand_with_enumerations(
-    output_file_list: &Vec<OutputFileDescription>, 
-    platform_list: &Vec<String>, 
-    language_list: &Vec<String>, 
-    enumeration_list: &Vec<String>) -> Vec<OutputFileDescription> {
-    
-    let mut results: Vec<OutputFileDescription>;
-
-    let mut files_with_platform: Vec<OutputFileDescription> = Vec::new();
-    for file in output_file_list {
-        for platform in platform_list {
-            let mut output_file = file.clone();
-
-            output_file.platform = Some(platform.clone());
-
-            files_with_platform.push(output_file);
-        }
-    }
-
-    if files_with_platform.is_empty() {
-        results = output_file_list.clone();
-    } else {
-        results = files_with_platform;
-    }
-
-    let mut files_with_language: Vec<OutputFileDescription> = Vec::new();
-    for file in &results {
-        for language in language_list {
-            let mut output_file = file.clone();
-
-            output_file.language = Some(language.clone());
-
-            files_with_language.push(output_file);
-        }
-    }
-
-    if !files_with_language.is_empty() {
-        results = files_with_language;
-    }
-
-    let mut files_with_enumeration: Vec<OutputFileDescription> = Vec::new();
-    for file in &results {
-        for enumeration in enumeration_list {
-            let mut output_file = file.clone();
-
-            output_file.enumeration = Some(enumeration.clone());
-
-            files_with_enumeration.push(output_file);
-        }
-    }
-
-    if !files_with_enumeration.is_empty() {
-        results = files_with_enumeration;
-    }
-
-    results
-}
-
-fn expand_with_matching_files(output_file_list: &Vec<OutputFileDescription>) -> Vec<OutputFileDescription> {
-    let mut results: Vec<OutputFileDescription> = Vec::new();
-
-    for file in output_file_list {
-        results.push(file.clone());
-        if file.extension == "cpp" || file.extension == "c" {
-            let mut matching_file = file.clone();
-            matching_file.extension = String::from("h");
-            results.push(matching_file);
-        } else if file.extension == "h" {
-            let mut matching_file = file.clone();
-            matching_file.extension = String::from("cpp");
-            results.push(matching_file);
-        }
-    }
-
-    results
-}
-
-#[test]
-pub fn matching_file_name_generation_c_to_h() {
-
-    let base_output_description = OutputFileDescription {
-        name: String::from("my_test_file"),
-        extension: String::from("h"),
-
-        enumeration: None,
-        platform: None,
-        language: None
-    };
-
-    let expected_output = vec![base_output_description.clone()];
-    let mut expected_matching_file = base_output_description.clone();
-    expected_matching_file.extension = String::from("cpp");
-
-    let actual_output = expand_with_matching_files(&expected_output);
-    expected_output.push(expected_matching_file);
-
-    assert_eq!(actual_output, expected_output);
-}

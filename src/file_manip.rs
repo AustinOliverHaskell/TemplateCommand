@@ -3,23 +3,6 @@ use std::io::Write;
 
 use crate::platform_specific::PLATFORM_SEPARATOR_SLASH;
 
-pub fn load_template_file_from_multiple_search_paths(paths: &Vec<String>, template_file_name: &String, be_verbose: bool) -> Option<String> {
-    
-    for path in paths {
-        let template = load_template_file(path, template_file_name, be_verbose);
-        if template.is_none() {
-            if be_verbose {
-                println!("Failed to load template file: {:}{:}", &path, template_file_name);
-            }
-            continue;
-        }
-
-        return Some(template.unwrap());
-    }
-
-    None
-}
-
 pub fn load_template_file(template_file_dir_path: &String, template_file_name: &String, be_verbose: bool) -> Option<String>{
 
     let template_path: String = String::from(template_file_dir_path) + PLATFORM_SEPARATOR_SLASH + template_file_name;

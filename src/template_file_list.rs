@@ -12,8 +12,6 @@ impl UnprocessedTemplateFile {
     pub fn new(
         extension_list: &Vec<String>, 
         root_path: &String, 
-        output_file_name: &String, 
-        output_extension: &String, 
         be_verbose: bool) 
     -> Option<Self> {
 
@@ -65,11 +63,4 @@ pub fn figure_out_which_template_to_use(extension_list: &Vec<String>, root_path:
     
     Some(extension_list_copy.join("."))
 }
-
-pub fn create_matching_file(original: &String, extension: &String) -> Option<String> {
-    None
-}
-
-
-
 
