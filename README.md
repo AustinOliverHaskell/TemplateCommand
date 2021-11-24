@@ -152,7 +152,7 @@ Evaluates to the friendly name of the device. This is the same as what shows whe
 .cpp file 
 
 ```C++
-// Created on []CURRENT_DATE[]
+// Created on []CURRENT_DATE[] by []USER[]
 
 #pragma once
 
@@ -177,5 +177,59 @@ class []FILE_NAME_AS_TYPE[] {
         []FILE_NAME_AS_TYPE[]()  {};
         ~[]FILE_NAME_AS_TYPE[]() {};
     private:
+};
+```
+</br>
+</br>
+<h3>Example C++ with design pattern</h3>
+</br>
+Because of the way this tool evaluates extensions, you can create ready to use design patterns. For example, you could create a singleton implementation and then create it in a pinch. 
+</br>
+</br>
+
+tt.singleton.h
+```C++
+#pragma once
+
+// Created by []USER[] on []CURRENT_DATE[] []CURRENT_TIME[]
+
+class []FILE_NAME_AS_TYPE[] {
+	public:
+		static []FILE_NAME_AS_TYPE[] * instance() {
+			if (_instance == nullptr) {
+				_instance = new []FILE_NAME_AS_TYPE[]();
+			}
+
+			return _instance;
+		}
+	private:
+		[]FILE_NAME_AS_TYPE[]() {
+		}
+
+		static []FILE_NAME_AS_TYPE[] * _instance;
+};
+```
+
+So by calling tt with a file name of my_file.singleton.h you'll get a file named my_file.h with the following contents. 
+
+```C++
+#pragma once
+
+// Created by austinhaskell on 11-24-2021 15:24
+
+class MyFile {
+	public:
+		static MyFile * instance() {
+			if (_instance == nullptr) {
+				_instance = new MyFile();
+			}
+
+			return _instance;
+		}
+	private:
+		MyFile() {
+		}
+
+		static MyFile * _instance;
 };
 ```
