@@ -2,6 +2,7 @@ use regex::*;
 
 use crate::template_file_list::UnprocessedTemplateFile;
 use crate::output_file_description::OutputFileDescription;
+use crate::file_manip::{get_current_path, get_current_dir_name};
 
 pub fn replace_symbols(unprocessed_file: &UnprocessedTemplateFile, output_file_description: &OutputFileDescription, be_verbose: bool) -> String {
 
@@ -49,8 +50,9 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
             }
         }
         "[]EXTENSION[]"           => { return output_file_description.extension.clone(); },
-        "[]PARENT_DIR[]"          => { return String::from("[]UNIMPLEMENTED[]"); },
-        "[]PARENT_DIR_AS_TYPE[]"  => { return String::from("[]UNIMPLEMENTED[]"); },
+        "[]DIR[]"                 => { return get_current_dir_name().unwrap_or(String::from(""));},
+        "[]DIR_AS_TYPE[]"         => { return create_type_from_file_name(&get_current_dir_name().unwrap_or(String::from(""))); },
+        "[]PWD[]"                 => { return get_current_path().unwrap_or(String::from("")); },
         "[]CURRENT_DATE[]"        => { return get_current_date("%m-%d-%Y"); },
         "[]CURRENT_TIME[]"        => { return get_current_time("%H:%M"); },
         "[]PLATFORM[]"            => { return replace_if_not_none("[]PLATFORM[]",    &output_file_description.platform);    },

@@ -63,3 +63,41 @@ pub fn check_if_file_exists(file: &String) -> bool {
 
     true
 }
+
+pub fn get_current_dir_name() -> Option<String>{
+    let path = std::env::current_dir();
+
+    if path.is_err() {
+        return None;
+    }
+
+    let full_path = path.unwrap();
+    let mut prefix    = full_path.clone();
+    prefix.pop();
+
+    let dir_name = full_path.strip_prefix(prefix);
+
+    if dir_name.is_err() {
+        None
+    } else {
+        // Holy crap this line sucks. - Austin Haskell 
+        Some(dir_name.unwrap().as_os_str().to_os_string().into_string().unwrap_or(String::from("")))
+    }
+}
+
+pub fn get_current_path() -> Option<String> {
+    let path = std::env::current_dir();
+
+    if path.is_err() {
+        return None;
+    }
+
+    let string_path = path.unwrap().into_os_string().into_string();
+
+    if string_path.is_err() {
+        println!("Failed to convert os string into regular string. ");
+        return None;
+    }
+
+    Some(string_path.unwrap())
+}

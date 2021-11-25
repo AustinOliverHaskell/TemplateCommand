@@ -95,9 +95,17 @@ Uses the file name and extension of the output file
 
 Evaluates to the right most extension of whatever is passed to -f. If there is no extension, this evaluates to the same thing as \[\]FILE_NAME\[\]
 
->\[\]PARENT_DIR\[\]
+>\[\]DIR\[\]
 
-Evaluates to the name of the parent directory from which the file will be generated to.
+Evaluates to the name of the current directory from which the file will be generated to.
+
+>\[\]DIR_AS_TYPE\[\]
+
+Evaluates to the name of the current directory from which the file will be generated to but as a Pascal case type name. 
+
+>\[\]PWD\[\]
+
+Evaluates to the current path that the file will be generated to. 
 
 >\[\]PARTNER_FILE\[\]
 
