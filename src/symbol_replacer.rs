@@ -40,6 +40,7 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
     match token {
         "[]FILE_NAME[]"         => { return output_file_description.name_with_extension(); }
         "[]FILE_NAME_AS_TYPE[]" => { return create_type_from_file_name(&output_file_description.name_expanded_with_enumerations()); },
+        "[]FILE_NAME_IN_CAPS[]" => { return string_in_all_caps(&output_file_description.name_expanded_with_enumerations()); },
         "[]PARTNER_FILE[]"      => { 
             if output_file_description.extension == "h" {
                 return output_file_description.name_expanded_with_enumerations() + ".cpp"; 
@@ -136,6 +137,12 @@ pub fn create_type_from_file_name(file_name: &String) -> String {
     }
 
     type_name
+}
+
+pub fn string_in_all_caps(file_name: &String) -> String {
+    let mut name = file_name.clone();
+    name.make_ascii_uppercase();
+    return name;
 }
 
 pub fn get_current_time(format: &str) -> String {

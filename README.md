@@ -91,6 +91,10 @@ Uses whatever is passed to the -f flag without the extension
 
 Uses the file name and extension of the output file
 
+>\[\]FILE_NAME_IN_CAPS\[\]
+
+Evaluates to the file name but in all caps, useful for creating define guards or enums.
+
 >\[\]EXTENSION\[\]
 
 Evaluates to the right most extension of whatever is passed to -f. If there is no extension, this evaluates to the same thing as \[\]FILE_NAME\[\]
