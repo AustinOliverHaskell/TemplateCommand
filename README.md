@@ -25,7 +25,7 @@ Creates one file with each value in the language enumeration file appended onto 
 
 >-n, --names
 
-Will print the names of the output files without showing their content or writing the files to disk
+Will print the names of the output files without showing their content or writing the files to disk. Useful if you're doing a lot with the enumerations and you want to see what the output will be. 
 
 >-m, --matching_file
 
@@ -144,6 +144,48 @@ Evaluates to the name of the currently running OS.
 >\[\]DEVICE_NAME\[\]
 
 Evaluates to the friendly name of the device. This is the same as what shows when pairing the device via bluetooth. 
+
+>\[\]CURRENT_DATE{format}\[\]
+
+Evaluates to the current date but uses whatever is passed to {format} as the format string. 
+
+Example
+```C++
+#pragma once
+
+// Created by []USER[] on []CURRENT_DATE{%d-%B-%Y}[]
+
+class []FILE_NAME_AS_TYPE[] {
+    public:
+        []FILE_NAME_AS_TYPE[]()  {};
+        ~[]FILE_NAME_AS_TYPE[]() {};
+    private:
+};
+```
+creates
+
+```C++
+#pragma once
+
+// Created by austinhaskell on 25-November-2021
+
+class MyFile {
+    public:
+        MyFile()  {};
+        ~MyFile() {};
+    private:
+};
+
+```
+
+Note: This follows the chrono formatting strings. See here: https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html
+
+>\[\]CURRENT_TIME{format}\[\]
+
+Evaluates to the current time but uses the format specifier to format the string. For an example see \[\]CURRENT_DATE{format}\[\] above. 
+
+Note: This follows the chrono formatting strings. See here: https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html
+
 
 # Example Templates
 <h3>Example C++ Template File</h3>

@@ -3,8 +3,10 @@ use regex::*;
 use crate::template_file_list::UnprocessedTemplateFile;
 use crate::output_file_description::OutputFileDescription;
 
-pub fn replace_symbols(unprocessed_file: &UnprocessedTemplateFile, output_file_description: &OutputFileDescription) -> String {
-    let regex = Regex::new("\\[\\][A-Z_]+\\[\\]").unwrap();
+pub fn replace_symbols(unprocessed_file: &UnprocessedTemplateFile, output_file_description: &OutputFileDescription, be_verbose: bool) -> String {
+
+    // @Optimize - Don't compile this regex every time this function is called. Make this a static. 
+    let regex = Regex::new(r"\[\][A-z]+(\{.*\})*\[\]").unwrap();
 
     let possible_matches = regex.find(&unprocessed_file.template_file_data);
     if possible_matches.is_none() {
@@ -18,7 +20,7 @@ pub fn replace_symbols(unprocessed_file: &UnprocessedTemplateFile, output_file_d
         let template_start: String = String::from(&processed_template[.._match.unwrap().start()]);
         let template_end:   String = String::from(&processed_template[_match.unwrap().end()..]);
 
-        let replacement_symbol = create_replacement_value(_match.unwrap().as_str(), output_file_description);
+        let replacement_symbol = create_replacement_value(_match.unwrap().as_str(), output_file_description, be_verbose);
 
         processed_template = template_start + &replacement_symbol + &template_end;
 
@@ -28,7 +30,11 @@ pub fn replace_symbols(unprocessed_file: &UnprocessedTemplateFile, output_file_d
     processed_template
 }
 
-pub fn create_replacement_value(token: &str, output_file_description: &OutputFileDescription) -> String {
+pub fn create_replacement_value(token: &str, output_file_description: &OutputFileDescription, be_verbose: bool) -> String {
+
+    if be_verbose {
+        println!("Matching against token: {:}", token);
+    }
 
     match token {
         "[]FILE_NAME[]"         => { return output_file_description.name_with_extension(); }
@@ -45,8 +51,8 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
         "[]EXTENSION[]"           => { return output_file_description.extension.clone(); },
         "[]PARENT_DIR[]"          => { return String::from("[]UNIMPLEMENTED[]"); },
         "[]PARENT_DIR_AS_TYPE[]"  => { return String::from("[]UNIMPLEMENTED[]"); },
-        "[]CURRENT_DATE[]"        => { return get_current_date(); },
-        "[]CURRENT_TIME[]"        => { return get_current_time(); },
+        "[]CURRENT_DATE[]"        => { return get_current_date("%m-%d-%Y"); },
+        "[]CURRENT_TIME[]"        => { return get_current_time("%H:%M"); },
         "[]PLATFORM[]"            => { return replace_if_not_none("[]PLATFORM[]",    &output_file_description.platform);    },
         "[]LANGUAGE[]"            => { return replace_if_not_none("[]LANGUAGE[]",    &output_file_description.language);    },
         "[]ENUMERATION[]"         => { return replace_if_not_none("[]ENUMERATION[]", &output_file_description.enumeration); },
@@ -54,19 +60,46 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
         "[]OS[]"                  => { return whoami::distro(); },
         "[]DEVICE_NAME[]"         => { return whoami::devicename(); },
         _ => {
-            let replacement_string = create_replacement_value_that_has_variable(token);
+            let replacement_string = create_replacement_value_that_has_variable(token, be_verbose);
             if replacement_string.is_some() {
                 return replacement_string.unwrap();
             }
         }
     }
 
-    println!("No match for token {:}", token);
+    println!("No match for token {:}, putting 'ERR' in it's place.", token);
     String::from("ERR")
 }
 
-pub fn create_replacement_value_that_has_variable(token: &str) -> Option<String> {
-    None
+pub fn create_replacement_value_that_has_variable(token: &str, be_verbose: bool) -> Option<String> {
+
+    // @Optimize - Don't compile this regex every time this function is called. Make this a static. 
+    let regex = Regex::new(r"\[\](.*)\{(.*)\}\[\]").unwrap();
+
+    let capture_groups: Vec<Captures> = regex.captures_iter(token).collect();
+
+    if capture_groups.is_empty() {
+        return None;
+    }
+
+    let capture = &capture_groups[0];
+    let token_name    = capture.get(1).map_or("ERR", |t| t.as_str());
+    let variable_text = capture.get(2).map_or("ERR", |v| v.as_str());
+
+    if be_verbose {
+        println!("Found variable expression with name {:}, and value {:}", token_name, variable_text);
+    }
+
+    match token_name {
+        "CURRENT_DATE"         => { Some(get_current_date(variable_text)) },
+        "CURRENT_TIME"         => { Some(get_current_time(variable_text)) },
+        "PARENT_DIR"           => { Some(String::from("UNIMPLEMENTED")) },
+        "FOR_EACH_FILE_IN_DIR" => { Some(String::from("UNIMPLEMENTED")) },
+        "REPEAT_X_TIMES"       => { Some(String::from("UNIMPLEMENTED")) }, 
+        "USER_VAR"             => { Some(String::from("UNIMPLEMENTED")) }, 
+        "ERR" => None,
+        _ => None,
+    }
 }
 
 fn replace_if_not_none(default: &str, replacement_val: &Option<String>) -> String {
@@ -103,18 +136,18 @@ pub fn create_type_from_file_name(file_name: &String) -> String {
     type_name
 }
 
-pub fn get_current_time() -> String {
+pub fn get_current_time(format: &str) -> String {
     use chrono::prelude::*;
 
     let local: DateTime<Local> = Local::now();
 
-    local.time().format("%H:%M").to_string()
+    local.time().format(format).to_string()
 }
 
-pub fn get_current_date() -> String {
+pub fn get_current_date(format: &str) -> String {
     use chrono::prelude::*;
 
     let local: DateTime<Local> = Local::now();
 
-    local.date().format("%m-%d-%Y").to_string()
+    local.date().format(format).to_string()
 }

@@ -104,7 +104,7 @@ fn main() {
     }
     
     for file in expanded_list {
-        let processed_file = replace_symbols(&template_file, &file);
+        let processed_file = replace_symbols(&template_file, &file, args.verbose_output);
         if args.write_file_to_screen {
             println!("----- {:} -----", file.name_with_extension());
             println!("{:}", processed_file);
