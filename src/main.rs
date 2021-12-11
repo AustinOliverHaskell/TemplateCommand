@@ -29,6 +29,10 @@ fn main() {
 
     let args = ProgramArguments::create();
 
+    if args.verbose_output {
+        println!("Program Args: {:?}", &args);
+    }
+
     if args.show_documentation {
         print_all_variables();
         return;
@@ -104,13 +108,19 @@ fn main() {
     }
     
     for file in expanded_list {
-        let processed_file = replace_symbols(&template_file, &file, args.verbose_output);
-        if args.write_file_to_screen {
-            println!("----- {:} -----", file.name_with_extension());
-            println!("{:}", processed_file);
+        let processed_file = replace_symbols(&template_file, &file, &args.harvest_directory, args.verbose_output);
+
+        let file_name;
+        if args.file_has_no_extension {
+           file_name = file.name_expanded_with_enumerations();
         } else {
-            let file_name = file.name_with_extension();
-    
+           file_name = file.name_with_extension();
+        }
+
+        if args.write_file_to_screen {
+            println!("----- {:} -----", file_name);
+            println!("{:}", processed_file);
+        } else {    
             write_file(&file_name, &processed_file, args.verbose_output, args.overwrite);
         }
     }

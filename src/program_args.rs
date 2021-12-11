@@ -8,6 +8,7 @@ pub struct ProgramArguments {
     pub file_name_without_extension: String,
     pub extension_list: Vec<String>,
     pub extension: String,
+    pub file_has_no_extension: bool,
 
     pub use_explicit_template_file: bool,
 
@@ -24,15 +25,19 @@ pub struct ProgramArguments {
     pub write_names_of_files_to_screen: bool,
 
     pub show_documentation: bool,
+
+    pub harvest_directory: Option<String>,
 }
 
 impl ProgramArguments {
     pub fn create() -> Self {
 
         let args = App::new("Template Creation Tool")
-                    .version("1.1.1")
+                    .version("1.1")
                     .author("Austin Haskell")
                     .about("This application aids in the creation of files via the command line")
+                    .after_help("The tool uses various variables to do it's replacement, this is the benefit of using this over something like touch or cp. 
+A full list of the variables supported can be found on the github page for this tool, or from running with the show_documentation (-s) flag. https://github.com/AustinOliverHaskell/TemplateCommand")
                     .arg(
                         Arg::with_name("template_file")    
                         .short("t")
@@ -95,13 +100,27 @@ impl ProgramArguments {
                         Arg::with_name("show_documentation")
                         .short("s")
                         .long("show_doc")
-                        .help("(NOT IMPLEMENTED, SEE README FOR DOC) If present, will print replacement variables and an explanation of what they do. ")
+                        .help("(NOT IMPLEMENTED, SEE README FOR DOC) If present, will print replacement variables and an explanation of what they do. "))
+                    .arg(
+                        Arg::with_name("harvest_directory")
+                        .short("h")
+                        .long("harvest")
+                        .takes_value(true)
+                        .help("Specifies the harvest directory. This is the directory that will be used for []FOR_EACH_FILE_IN_DIR{}[] and []EACH_FILE_IN_DIR[]. If this isn't present, the current working directory will be used. Currently if you use this argument, all file paths will be generated with the absolute path to that file. ")
                     ).get_matches();
 
         let file_name = String::from(args.value_of("file_name").unwrap_or(""));
         let template_name = args.value_of("template_file").unwrap_or("");
 
         let extension_list: Vec<&str> = file_name.split('.').collect();
+
+        let harvest_directory: Option<String>;
+        let harvest_directory_present = args.value_of("harvest_directory");
+        if harvest_directory_present.is_none() {
+            harvest_directory = None;
+        } else {
+            harvest_directory = Some(String::from(args.value_of("harvest_directory").unwrap()));
+        }
         
         ProgramArguments {
             file_name: file_name.clone(),
@@ -125,7 +144,11 @@ impl ProgramArguments {
             write_file_to_screen: args.is_present("debug"),
             write_names_of_files_to_screen: args.is_present("list_names"),
 
-            show_documentation: args.is_present("show_documentation")
+            show_documentation: args.is_present("show_documentation"),
+
+            harvest_directory: harvest_directory,
+
+            file_has_no_extension: extension_list.len() == 1
         }
     } 
 }
