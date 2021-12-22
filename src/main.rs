@@ -6,6 +6,9 @@ mod template_file_list;
 mod platform_specific;
 mod command_line_documentation;
 mod output_file_description;
+mod util;
+mod formatter;
+mod file_harvester;
 
 use program_args::*;
 use file_manip::*;

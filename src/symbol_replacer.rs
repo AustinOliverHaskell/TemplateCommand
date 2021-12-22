@@ -2,7 +2,10 @@ use regex::*;
 
 use crate::template_file_list::UnprocessedTemplateFile;
 use crate::output_file_description::OutputFileDescription;
-use crate::file_manip::{get_current_path, get_current_dir_name, get_all_files_in_dir, extract_file_name_and_extension_from_path};
+use crate::file_manip::{get_current_path, get_current_dir_name};
+use crate::util::*;
+use crate::formatter::{format_file_name_as_pascal_case, string_in_all_caps};
+use crate::file_harvester::*;
 
 use crate::platform_specific::*;
 
@@ -45,7 +48,7 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
 
     match token {
         "[]FILE_NAME[]"         => { return output_file_description.name_with_extension(); }
-        "[]FILE_NAME_AS_TYPE[]" => { return create_type_from_file_name(&output_file_description.name_expanded_with_enumerations()); },
+        "[]FILE_NAME_AS_TYPE[]" => { return format_file_name_as_pascal_case(&output_file_description.name_expanded_with_enumerations()); },
         "[]FILE_NAME_IN_CAPS[]" => { return string_in_all_caps(&output_file_description.name_expanded_with_enumerations()); },
         "[]PARTNER_FILE[]"      => { 
             if output_file_description.extension == "h" {
@@ -58,7 +61,7 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
         }
         "[]EXTENSION[]"           => { return output_file_description.extension.clone(); },
         "[]DIR[]"                 => { return get_current_dir_name().unwrap_or(String::from(""));},
-        "[]DIR_AS_TYPE[]"         => { return create_type_from_file_name(&get_current_dir_name().unwrap_or(String::from(""))); },
+        "[]DIR_AS_TYPE[]"         => { return format_file_name_as_pascal_case(&get_current_dir_name().unwrap_or(String::from(""))); },
         "[]PWD[]"                 => { return get_current_path().unwrap_or(String::from("")); },
         "[]CURRENT_DATE[]"        => { return get_current_date("%m-%d-%Y"); },
         "[]CURRENT_TIME[]"        => { return get_current_time("%H:%M"); },
@@ -139,116 +142,16 @@ fn create_replacement_value_for_harvest_variable(parameters: &str, harvest_locat
 
     let mut replacement_value: String = String::new();
     for file in harvested_files {
-        replacement_value += &(replace_harvest_variables(user_line_parameter, "", "") + PLATFORM_LINE_ENDING); 
+        replacement_value += &(replace_harvest_variables(user_line_parameter, file) + PLATFORM_LINE_ENDING); 
     }
 
     Some(replacement_value)
 }
 
-fn replace_harvest_variables(line: &str, file_name_without_extension: &str, file_name_full: &str) -> String {
+fn replace_harvest_variables(line: &str, file: HarvestedFile) -> String {
 
 
 
 
     String::from(line)
-}
-
-// @todo: move this harvest stuff into it's own type and file. 
-fn harvest_files_from_dir_as_string(dir: &Option<String>, ignore_list: Vec<String>, be_verbose: bool) -> String {
-
-    let remove_path: bool = dir.is_none();
-
-    let file_list = get_all_files_in_dir(dir, ignore_list, be_verbose);
-    if file_list.is_none() {
-        return String::new();
-    }
-
-    let mut dir_list_on_separate_lines: String = String::new();
-    for file in file_list.unwrap() {
-
-        let mut file_name: String = file.clone();
-        if remove_path {
-            let stripped_file_name = extract_file_name_and_extension_from_path(&file);
-            if stripped_file_name.is_none() {
-                continue;
-            }
-            file_name = stripped_file_name.unwrap();
-        }
-        dir_list_on_separate_lines += &(file_name + PLATFORM_LINE_ENDING);
-    }
-
-    dir_list_on_separate_lines
-}
-
-// @todo: finish this, it should probs return a type with the extension, file name, and path contained within. 
-fn harvest_files_from_dir(dir: &Option<String>, ignore_list: Vec<String>, be_verbose: bool) -> Vec<String>{
-    Vec::new()
-}
-
-fn replace_if_not_none(default: &str, replacement_val: &Option<String>) -> String {
-    if replacement_val.is_none() {
-        return String::from(default);
-    }
-
-    replacement_val.clone().unwrap()
-}
-
-pub fn create_type_from_file_name(file_name: &String) -> String {
-
-    let mut type_name: String = String::new();
-
-    let mut was_last_character_a_underscore = false;
-    // Whew! This is a total mess - Austin Haskell
-    type_name.push(file_name.chars().next().unwrap().to_uppercase().next().unwrap());
-    for character in file_name[1..].chars() {
-
-        if character == '_' {
-            was_last_character_a_underscore = true;
-            continue;
-        } else {
-            if was_last_character_a_underscore {
-                type_name.push(character.to_uppercase().next().unwrap());
-            } else {
-                type_name.push(character);
-            }
-
-            was_last_character_a_underscore = false;
-        }
-    }
-
-    type_name
-}
-
-pub fn string_in_all_caps(file_name: &String) -> String {
-    let mut name = file_name.clone();
-    name.make_ascii_uppercase();
-    return name;
-}
-
-pub fn get_current_time(format: &str) -> String {
-    use chrono::prelude::*;
-
-    let local: DateTime<Local> = Local::now();
-
-    local.time().format(format).to_string()
-}
-
-pub fn get_current_date(format: &str) -> String {
-    use chrono::prelude::*;
-
-    let local: DateTime<Local> = Local::now();
-
-    local.date().format(format).to_string()
-}
-
-pub fn parse_csv_list(csv: &str)-> Vec<String> {
-
-    let mut list: Vec<String> = Vec::new();
-
-    for item in csv.split(',') {
-        let item_without_whitespace = item.replace(" ", "");
-        list.push(String::from(item_without_whitespace));
-    }
-
-    list
 }
