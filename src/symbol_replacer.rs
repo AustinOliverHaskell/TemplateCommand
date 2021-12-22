@@ -109,7 +109,7 @@ pub fn create_replacement_value_that_has_variable(token: &str, harvest_location:
         "CURRENT_DATE"         => { Some(get_current_date(variable_text)) },
         "CURRENT_TIME"         => { Some(get_current_time(variable_text)) },
         "PARENT_DIR"           => { Some(String::from("UNIMPLEMENTED")) },
-        "EACH_FILE_IN_DIR"     => { Some(harvest_files_from_dir_as_string(harvest_location, parse_csv_list(variable_text), be_verbose)) },
+        "EACH_FILE_IN_DIR"     => { Some(harvest_files_from_dir_as_string(harvest_location, &parse_csv_list(variable_text), be_verbose, harvest_location.is_some())) },
         "FOR_EACH_FILE_IN_DIR" => { create_replacement_value_for_harvest_variable(variable_text, harvest_location, be_verbose) },
         "REPEAT_X_TIMES"       => { Some(String::from("UNIMPLEMENTED")) }, 
         "USER_VAR"             => { Some(String::from("UNIMPLEMENTED")) }, 
@@ -132,13 +132,11 @@ fn create_replacement_value_for_harvest_variable(parameters: &str, harvest_locat
             println!("Ignoring file type/name: {:?}", item);
         }
     }
+    
+    let harvested_files = harvest_files_from_dir(harvest_location, &ignore_list, be_verbose);
 
-    let harvested_files = harvest_files_from_dir(harvest_location, Vec::new(), be_verbose);
 
     let user_line_parameter = parameter_list[1];
-
-    println!("Working with ignore list of: {:?}", &ignore_list);
-    println!("Working with user line of {:?}", user_line_parameter);
 
     let mut replacement_value: String = String::new();
     for file in harvested_files {
@@ -150,8 +148,35 @@ fn create_replacement_value_for_harvest_variable(parameters: &str, harvest_locat
 
 fn replace_harvest_variables(line: &str, file: HarvestedFile) -> String {
 
+    // Matches anything between two sets of {}, so {}FILE_NAME{} matches but
+    //  { }FILE_NAME{dfjkasfd} will not. 
+    let regex = Regex::new(r"\{\}[A-z]*\{\}").unwrap();
 
+    let mut line_with_evaluated_variables = String::from(line);
+    let mut _match = regex.find(&line_with_evaluated_variables);
+    while _match.is_some() {
 
+        let start = String::from(&line_with_evaluated_variables[.._match.unwrap().start()]);
+        let end   = String::from(&line_with_evaluated_variables[_match.unwrap().end()..]);
 
-    String::from(line)
+        let variable = _match.unwrap().as_str();
+        let evaluated_variable: String;
+        match variable {
+            "{}FILE_NAME{}" => evaluated_variable = file.to_string(),
+            "{}FILE_NAME_WITHOUT_EXTENSION{}" => evaluated_variable = replace_if_not_none("", &file.file_name),
+            "{}EXTENSION{}" => evaluated_variable = replace_if_not_none("", &file.extension),
+            "{}FILE_NAME_AS_TYPE{}" => evaluated_variable = format_file_name_as_pascal_case(&replace_if_not_none("", &file.file_name)),
+            "{}FILE_NAME_IN_CAPS{}" => evaluated_variable = string_in_all_caps(&replace_if_not_none("", &file.file_name)),
+            "{}PATH{}" => evaluated_variable = replace_if_not_none("", &file.path),
+            _ => {
+                println!("Unknown variable {:} found when parsing. See documentation for a list of currently supported variables. ", variable);
+                evaluated_variable = String::from("ERR");
+            }
+        }
+
+        line_with_evaluated_variables = start + &evaluated_variable + &end;
+        _match = regex.find(&line_with_evaluated_variables)
+    }
+
+    String::from(line_with_evaluated_variables)
 }
