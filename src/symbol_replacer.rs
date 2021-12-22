@@ -117,8 +117,6 @@ pub fn create_replacement_value_that_has_variable(token: &str, harvest_location:
 
 fn create_replacement_value_for_harvest_variable(parameters: &str, harvest_location: &Option<String>, be_verbose: bool) -> Option<String>{
 
-    println!("Working with variables: {:?}", parameters);
-
     let parameter_list: Vec<&str> = parameters.split("|||").collect();
     if parameter_list.len() != 2 {
         println!("Incorrect number of arguments to FOR_EACH_FILE_IN_DIR, expected both an ignore list and the line you wish to repeat. If you have no files you want to ignore then leave it blank, but it must be included. ");
@@ -127,7 +125,7 @@ fn create_replacement_value_for_harvest_variable(parameters: &str, harvest_locat
 
     let ignore_list = parse_csv_list(parameter_list[0]);
     if be_verbose {
-        for item in ignore_list {
+        for item in &ignore_list {
             println!("Ignoring file type/name: {:?}", item);
         }
     }
@@ -135,6 +133,9 @@ fn create_replacement_value_for_harvest_variable(parameters: &str, harvest_locat
     let harvested_files = harvest_files_from_dir(harvest_location, Vec::new(), be_verbose);
 
     let user_line_parameter = parameter_list[1];
+
+    println!("Working with ignore list of: {:?}", &ignore_list);
+    println!("Working with user line of {:?}", user_line_parameter);
 
     let mut replacement_value: String = String::new();
     for file in harvested_files {
