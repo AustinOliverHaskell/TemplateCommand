@@ -59,7 +59,7 @@ File name to create. The extension on the filename determines which template fil
 
 >-h, --harvest
 
-The directory to use for all file name harvesting. See FOR_EACH_FILE and EACH_FILE_IN_DIR in the template variable section below. 
+The directory to use for all file name harvesting. See FOR_EACH_FILE_IN_DIR and EACH_FILE_IN_DIR in the template variable section below. 
 
 >-t, --template
 
@@ -205,7 +205,7 @@ Note: This follows the chrono formatting strings. See here: https://docs.rs/chro
 
 >\[\]EACH_FILE_IN_DIR{ignore list}\[\]
 
-Places the name of every file in the current directory (Or the harvest directory if the -h flag is used). This will add a new line after each file name. Additionally, a comma seperated list of extensions to ignore can be added inside the {}. 
+Places the name of every file in the current directory (Or the harvest directory if the -h flag is used). This will add a new line after each file name. Additionally, a comma seperated list of extensions to ignore can be added inside the {} curly brackets. If -h is specified this will contain the path to that file aswell. Without -h this will just use the file name without the path to that file. 
 
 For example, having \[\]EACH_FILE_IN_DIR{h, cpp}\[\] will expand to every file in the current directory but will ignore files with either .h or .cpp extensions. 
 
@@ -229,7 +229,7 @@ Note: The sub-variable used inside the line uses curly brackets {} rather than s
 
 >\[\]VERSION\[\]
 
-Evaluates to the current version number of this tool. 
+Evaluates to the current version number of this tool in X.X.X formatting. 
 
 # Example Templates
 <h3>Example C++ Template File</h3>
@@ -318,4 +318,29 @@ class MyFile {
 
 		static MyFile * _instance;
 };
+```
+
+<h3>Example file with Harvesting</h3>
+A powerfull feature of tt is it's capability to repeat a line for every file in the directory. For example, if you're working with Qt's QML engine, you've most likely come across managing qmldir files. tt can help you create these files with ease. 
+<br /><br />
+
+```
+// Generated on []CURRENT_DATE[] - []CURRENT_TIME[] by []USER[] with tt v[]VERSION[]
+
+module []DIR[]
+[]FOR_EACH_FILE_IN_DIR{qmldir, qrc, pro, c, cpp, h|||{}FILE_NAME_WITHOUT_EXTENSION{} 1.0 {}FILE_NAME{}}[]
+designersupported
+```
+
+The above template will look in the current directory (or whatever is supplied to the -h option) and repeat {}FILE_NAME_WITHOUT_EXTENSION{} 1.0 {}FILE_NAME{} for each file with an extension not in the ignore list (qmldir, qrc, pro, c, cpp, h) and will evaluate any variables within the curly brackets. 
+
+Output of above example when run on a directory with two qmlfiles
+
+```
+// Generated on 12-22-2021 13:29 by austinhaskell with tt v1.1.0
+
+module Example
+Button01 1.0 Button01.qml
+Button02 1.0 Button02.qml
+designersupported
 ```
