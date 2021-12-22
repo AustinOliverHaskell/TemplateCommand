@@ -227,6 +227,10 @@ In addition to the above variables the following are supported:
 
 Note: The sub-variable used inside the line uses curly brackets {} rather than square brackets. This was to make the parsing easier. 
 
+>\[\]VERSION\[\]
+
+Evaluates to the current version number of this tool. 
+
 # Example Templates
 <h3>Example C++ Template File</h3>
 <br />

@@ -71,6 +71,7 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
         "[]USER[]"                => { return whoami::username(); },
         "[]OS[]"                  => { return whoami::distro(); },
         "[]DEVICE_NAME[]"         => { return whoami::devicename(); },
+        "[]VERSION[]"             => {return String::from(env!("CARGO_PKG_VERSION")); }
         _ => {
             let replacement_string = create_replacement_value_that_has_variable(token, harvest_location, be_verbose);
             if replacement_string.is_some() {
@@ -132,7 +133,7 @@ fn create_replacement_value_for_harvest_variable(parameters: &str, harvest_locat
             println!("Ignoring file type/name: {:?}", item);
         }
     }
-    
+
     let harvested_files = harvest_files_from_dir(harvest_location, &ignore_list, be_verbose);
 
 

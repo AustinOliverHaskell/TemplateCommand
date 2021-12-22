@@ -33,7 +33,7 @@ impl ProgramArguments {
     pub fn create() -> Self {
 
         let args = App::new("Template Creation Tool")
-                    .version("1.1")
+                    .version(env!("CARGO_PKG_VERSION"))
                     .author("Austin Haskell")
                     .about("This application aids in the creation of files via the command line")
                     .after_help("The tool uses various variables to do it's replacement, this is the benefit of using this over something like touch or cp. 
