@@ -15,9 +15,13 @@ Prints what will be contained in the template rather than saving it to the file 
 
 Creates one file with each value in the enumeration file appended onto it. 
 
->-h, --help
+>--help
 
 Displays a help dialog with this information. 
+
+>-h, --harvest
+
+The directory to use for all file name harvesting. See FOR_EACH_FILE and EACH_FILE_IN_DIR in the template variable section below. 
 
 >-l, --language
 
@@ -75,13 +79,13 @@ List of user defined enumerations to use for the -e flag
 </br>
 </br>
 
-<h2>Template Files</h2>
+# Template Files
 Template files are files with the name "tt" and an extension. For example tt.cpp will be used when creating a cpp file. These files are located in a directory called templates alongside the tt executable. 
 
 <br />
 
 # Template Variables
-tt supports multiple variables that can be added to your template file. These variables will be replaced with various values as defined below. All template variables start and end with "[]"
+tt supports multiple variables that can be added to your template file. These variables will be replaced with various values as defined below. All template variables start and end with "[]". Some of the more complicated template variables also contain a "{}" section. This allows you to supply format specifiers to those variables.  
 
 >\[\]FILE_NAME_AS_TYPE\[\]
 
@@ -198,6 +202,30 @@ Evaluates to the current time but uses the format specifier to format the string
 
 Note: This follows the chrono formatting strings. See here: https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html
 
+
+>\[\]EACH_FILE_IN_DIR{ignore list}\[\]
+
+Places the name of every file in the current directory (Or the harvest directory if the -h flag is used). This will add a new line after each file name. Additionally, a comma seperated list of extensions to ignore can be added inside the {}. 
+
+For example, having \[\]EACH_FILE_IN_DIR{h, cpp}\[\] will expand to every file in the current directory but will ignore files with either .h or .cpp extensions. 
+
+>\[\]FOR_EACH_FILE_IN_DIR{ignore list ||| line {}VAR{} line }\[\]
+
+This is the most complex variable that is currently supported. This variable takes two arguments seperated with a tripple pipe |||. The first argument is the set of files to ignore when harvesting files. The second argument is the line that will be repeated for each file. The line provided as the second argument supports the following variables: 
+
+- FILE_NAME
+- FILE_NAME_AS_TYPE
+- FILE_NAME_WITHOUT_EXTENSION
+- FILE_NAME_IN_CAPS
+- EXTENSION
+
+The functionality of the above variables is the same as their square-bracket counterparts. 
+
+In addition to the above variables the following are supported:
+
+- PATH - The full path to the harvested file. 
+
+Note: The sub-variable used inside the line uses curly brackets {} rather than square brackets. This was to make the parsing easier. 
 
 # Example Templates
 <h3>Example C++ Template File</h3>
