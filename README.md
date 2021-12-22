@@ -19,10 +19,6 @@ Creates one file with each value in the enumeration file appended onto it.
 
 Displays a help dialog with this information. 
 
->-h, --harvest
-
-The directory to use for all file name harvesting. See FOR_EACH_FILE and EACH_FILE_IN_DIR in the template variable section below. 
-
 >-l, --language
 
 Creates one file with each value in the language enumeration file appended onto it. 
@@ -60,6 +56,10 @@ Turns on verbose mode. You'll get any debug statements I left in here, so do wit
 >-f, --file
 
 File name to create. The extension on the filename determines which template file to use. 
+
+>-h, --harvest
+
+The directory to use for all file name harvesting. See FOR_EACH_FILE and EACH_FILE_IN_DIR in the template variable section below. 
 
 >-t, --template
 
