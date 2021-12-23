@@ -11,3 +11,4 @@
 - Support for relative \[\]DIR{how many dirs up the tree to move}\[\]
 - Support for user defined variables inside template file (This is a big complexity jump and I cant think of many uses for it)
 - {}NUMBER{} variable for the FOR_EACH_FILE_IN_DIR variable that will evaluate to the iteration number
+- Ability to make named templates for no extension files. ie: sdl.makefile or opengl.makefile and still have it generate a file named makefile
