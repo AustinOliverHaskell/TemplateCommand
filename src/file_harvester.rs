@@ -35,22 +35,25 @@ impl HarvestedFile {
         }
         let unwrapped_file_name_and_extension = file_name_and_extension.unwrap();
 
-        let split_name: Vec<&str> = unwrapped_file_name_and_extension.split(".").collect();
+        let possible_extension = extract_extension_from_file_name(&unwrapped_file_name_and_extension);
+        let possible_file_name = remove_extensions_from_file_name(&unwrapped_file_name_and_extension);
 
         let extension: String;
         let file_name: String;
 
-        if split_name.len() == 1 {
-            file_name = String::from(split_name[0]);
+        if possible_extension == None {
             extension = String::new();
-        } else if split_name.len() == 2 {
-            file_name = String::from(split_name[0]);
-            extension = String::from(split_name[1]);
         } else {
-            file_name = String::new();
-            extension = String::new();
+            extension = possible_extension.unwrap();
         }
 
+        if possible_file_name == None {
+            file_name = String::new();
+        } else {
+            file_name = possible_file_name.unwrap();
+        }
+
+        println!("File Name {{{:}}}  extension {{{:}}}", &file_name, &extension);
         HarvestedFile {
             extension: Some(extension),
             file_name: Some(file_name),
@@ -124,12 +127,17 @@ pub fn harvest_all_files_in_dir(directory_path: &Option<String>, ignore_list: &V
         let file_name        = file.file_name().into_string().unwrap_or(String::from(""));
 
         if file_description.is_file() {
+
+            if be_verbose {
+                println!("Found file {:}", &file_name);
+            }
+
             if ignore_list.contains(&file_name) {
                 continue;
             }
 
             let file_extension   = extract_extension_from_file_name(&file_name);
-            if file_extension.is_some() && ignore_list.contains(&file_extension.unwrap()) {
+            if file_extension.is_some() && ignore_list.contains(&file_extension.clone().unwrap()) {
                 continue;
             }
             
