@@ -25,6 +25,7 @@ pub struct ProgramArguments {
     pub write_names_of_files_to_screen: bool,
 
     pub show_documentation: bool,
+    pub show_templates: bool,
 
     pub harvest_directory: Option<String>,
 }
@@ -50,7 +51,8 @@ A full list of the variables supported can be found on the github page for this 
                         .long("file")
                         .help("File to create. Extension is used to select template to use unless -t flag is also present")
                         .takes_value(true)
-                        .required_unless("show_documentation"))
+                        .required_unless("show_documentation")
+                        .required_unless("show_templates"))
                     .arg(
                         Arg::with_name("overwrite")
                         .short("o")
@@ -102,6 +104,12 @@ A full list of the variables supported can be found on the github page for this 
                         .long("show_doc")
                         .help("(NOT IMPLEMENTED, SEE README FOR DOC) If present, will print replacement variables and an explanation of what they do. "))
                     .arg(
+                        Arg::with_name("show_templates")
+                        .short("z")
+                        .long("show_templates")
+                        .help("Lists the names of all template files found as well as the directory being used for templates.")
+                    )
+                    .arg(
                         Arg::with_name("harvest_directory")
                         .short("h")
                         .long("harvest")
@@ -145,6 +153,7 @@ A full list of the variables supported can be found on the github page for this 
             write_names_of_files_to_screen: args.is_present("list_names"),
 
             show_documentation: args.is_present("show_documentation"),
+            show_templates: args.is_present("show_templates"),
 
             harvest_directory: harvest_directory,
 

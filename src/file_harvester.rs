@@ -53,7 +53,7 @@ impl HarvestedFile {
             file_name = possible_file_name.unwrap();
         }
 
-        println!("File Name {{{:}}}  extension {{{:}}}", &file_name, &extension);
+        //println!("File Name {{{:}}}  extension {{{:}}}", &file_name, &extension);
         HarvestedFile {
             extension: Some(extension),
             file_name: Some(file_name),

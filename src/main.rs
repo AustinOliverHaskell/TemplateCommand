@@ -17,6 +17,7 @@ use enumeration_list::*;
 use template_file_list::*;
 use output_file_description::*;
 use command_line_documentation::print_all_variables;
+use file_harvester::harvest_files_from_dir_as_string;
 use platform_specific::PLATFORM_SEPARATOR_SLASH;
 
 fn main() {
@@ -38,6 +39,14 @@ fn main() {
 
     if args.show_documentation {
         print_all_variables();
+        return;
+    }
+
+    if args.show_templates {
+        println!("Looking for template files in {{{:}}}", template_dir_path);
+        let file_list = harvest_files_from_dir_as_string(&Some(template_dir_path), &Vec::new(), false, false);
+        println!("Found the following templates: ");
+        println!("{:}", file_list);
         return;
     }
 
