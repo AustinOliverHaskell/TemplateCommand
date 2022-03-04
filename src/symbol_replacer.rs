@@ -4,7 +4,7 @@ use crate::template_file_list::UnprocessedTemplateFile;
 use crate::output_file_description::OutputFileDescription;
 use crate::file_manip::{get_current_path, get_current_dir_name};
 use crate::util::*;
-use crate::formatter::{format_file_name_as_pascal_case, string_in_all_caps};
+use crate::formatter::*;
 use crate::file_harvester::*;
 
 use crate::platform_specific::*;
@@ -48,7 +48,7 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
 
     match token {
         "[]FILE_NAME[]"         => { return output_file_description.name_with_extension(); }
-        "[]FILE_NAME_AS_TYPE[]" => { return format_file_name_as_pascal_case(&output_file_description.name_expanded_with_enumerations()); },
+        "[]FILE_NAME_AS_TYPE[]" => { return string_in_pascal_case(&output_file_description.name_expanded_with_enumerations()); },
         "[]FILE_NAME_IN_CAPS[]" => { return string_in_all_caps(&output_file_description.name_expanded_with_enumerations()); },
         "[]PARTNER_FILE[]"      => { 
             if output_file_description.extension == "h" {
@@ -61,7 +61,7 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
         }
         "[]EXTENSION[]"           => { return output_file_description.extension.clone(); },
         "[]DIR[]"                 => { return get_current_dir_name().unwrap_or(String::from(""));},
-        "[]DIR_AS_TYPE[]"         => { return format_file_name_as_pascal_case(&get_current_dir_name().unwrap_or(String::from(""))); },
+        "[]DIR_AS_TYPE[]"         => { return string_in_pascal_case(&get_current_dir_name().unwrap_or(String::from(""))); },
         "[]PWD[]"                 => { return get_current_path().unwrap_or(String::from("")); },
         "[]CURRENT_DATE[]"        => { return get_current_date("%m-%d-%Y"); },
         "[]CURRENT_TIME[]"        => { return get_current_time("%H:%M"); },
@@ -73,7 +73,7 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
         "[]DEVICE_NAME[]"         => { return whoami::devicename(); },
         "[]VERSION[]"             => {return String::from(env!("CARGO_PKG_VERSION")); }
         _ => {
-            let replacement_string = create_replacement_value_that_has_variable(token, harvest_location, be_verbose);
+            let replacement_string = create_replacement_value_that_has_variable(token, harvest_location, output_file_description, be_verbose);
             if replacement_string.is_some() {
                 return replacement_string.unwrap();
             }
@@ -87,7 +87,7 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
     String::from("ERR")
 }
 
-pub fn create_replacement_value_that_has_variable(token: &str, harvest_location: &Option<String>, be_verbose: bool) -> Option<String> {
+pub fn create_replacement_value_that_has_variable(token: &str, harvest_location: &Option<String>, output_file_description: &OutputFileDescription, be_verbose: bool) -> Option<String> {
 
     // @Optimize - Don't compile this regex every time this function is called. Make this a static. 
     let regex = Regex::new(r"\[\]([A-z]*)\{(.*)\}\[\]").unwrap();
@@ -114,6 +114,7 @@ pub fn create_replacement_value_that_has_variable(token: &str, harvest_location:
         "FOR_EACH_FILE_IN_DIR" => { create_replacement_value_for_harvest_variable(variable_text, harvest_location, be_verbose) },
         "REPEAT_X_TIMES"       => { Some(String::from("UNIMPLEMENTED")) }, 
         "USER_VAR"             => { Some(String::from("UNIMPLEMENTED")) }, 
+        "FILE_NAME_AS_TYPE"    => { create_type_name_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text, be_verbose) },
         "ERR" => None,
         _ => None,
     }
@@ -166,7 +167,7 @@ fn replace_harvest_variables(line: &str, file: HarvestedFile) -> String {
             "{}FILE_NAME{}" => evaluated_variable = file.to_string(),
             "{}FILE_NAME_WITHOUT_EXTENSION{}" => evaluated_variable = replace_if_not_none("", &file.file_name),
             "{}EXTENSION{}" => evaluated_variable = replace_if_not_none("", &file.extension),
-            "{}FILE_NAME_AS_TYPE{}" => evaluated_variable = format_file_name_as_pascal_case(&replace_if_not_none("", &file.file_name)),
+            "{}FILE_NAME_AS_TYPE{}" => evaluated_variable = string_in_pascal_case(&replace_if_not_none("", &file.file_name)),
             "{}FILE_NAME_IN_CAPS{}" => evaluated_variable = string_in_all_caps(&replace_if_not_none("", &file.file_name)),
             "{}PATH{}" => evaluated_variable = replace_if_not_none("", &file.path),
             _ => {
@@ -180,4 +181,46 @@ fn replace_harvest_variables(line: &str, file: HarvestedFile) -> String {
     }
 
     String::from(line_with_evaluated_variables)
+}
+
+fn create_type_name_with_args(name: &str, variable: &str, be_verbose: bool) -> Option<String> {
+
+    let first_char = variable.chars().nth(0);
+    if first_char.is_none() {
+        println!("Warning: no variable defined in FILE_NAME_AS_TYPE yet brackets exist. Remove the brackets or add a variable.");
+        return None;
+    }
+    let first_char = first_char.unwrap();
+    if first_char == '-' {
+        // @future: make this also take a formatting argument. 
+        let formatted_string = subtract_ending_off_string(&string_in_pascal_case(name), &variable[1..]);
+        if formatted_string.is_err() {
+            println!("Failed to subtract ending {{{:}}}. Reason: {:}", &variable[1..], formatted_string.unwrap_err());
+            return None;
+        }
+
+        return Some(formatted_string.unwrap());
+
+    } else if first_char == '+' {
+        // @future: make this also take a formatting argument. 
+        return Some(
+            string_in_pascal_case(&name.to_string()) + 
+            &variable[1..]
+        ); 
+    } else {
+        return match variable {
+            "caps"   => { Some(string_in_all_caps(&String::from(name))) },
+            "lower"  => { Some(string_in_all_lowercase(name)) },
+            "spaced" => { Some(string_split_into_spaces(name)) },
+            "pascal" => { Some(string_in_pascal_case(name)) },
+            "camel"  => { Some(string_in_camel_case(name)) }, 
+            "kabob"  => { Some(string_in_kebob_case(name)) }, 
+            _ => {
+                println!("No recognized formatting method for {{{:}}}. Check documentation for valid formatting methods. ", variable);
+                None
+            }
+        }
+    }
+
+    None
 }

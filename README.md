@@ -93,7 +93,45 @@ tt supports multiple variables that can be added to your template file. These va
 
 >\[\]FILE_NAME_AS_TYPE\[\]
 
-Uses whatever is passed to the -f flag without the extension
+Uses whatever is passed to the -f flag without the extension formatted into pascal case. 
+
+>\[\]FILE_NAME_AS_TYPE{-suffix, +suffix}\[\]
+
+Uses whatever is passed to the -f flag without the extension formatted into pascal case. Additionally this will add or subtract whatever is passed in the {}
+
+``` C++ 
+[]FILE_NAME_AS_TYPE{-Accessor}[] * []FILE_NAME_AS_TYPE[]::get_model_instance() { /* impl */ }
+```
+
+When the above is run with a file name of model_accessor.h the line above will evaluate to
+
+``` C++
+Model * ModelAccessor::get_model_instance() { /* impl */ }
+```
+
+>\[\]FILE_NAME_AS_TYPE{case}\[\]
+
+Uses whatever is passed to the -f flag without the extension formatted the case specified in the {}.
+
+``` C++ 
+[]FILE_NAME_AS_TYPE{camel}[]
+[]FILE_NAME_AS_TYPE{pascal}[]
+[]FILE_NAME_AS_TYPE{spaced}[]
+[]FILE_NAME_AS_TYPE{kabob}[]
+[]FILE_NAME_AS_TYPE{lower}[]
+[]FILE_NAME_AS_TYPE{upper}[]
+```
+
+When the above is run with a file name of my_file_test.h the line above will evaluate to
+
+``` C++
+myFileCase
+MyFileCase
+my file test
+my-file-test
+my_file_test
+MY_FILE_TEST
+```
 
 >\[\]FILE_NAME\[\]
 
