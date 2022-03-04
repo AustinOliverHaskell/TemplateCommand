@@ -51,6 +51,10 @@ Prints the version information.
 
 Turns on verbose mode. You'll get any debug statements I left in here, so do with that what you will. 
 
+>-z, --show_templates
+
+Shows all templates that are available to use, also lists the directory in which tt is looking. 
+
 # Options
 
 >-f, --file
