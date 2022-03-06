@@ -192,22 +192,31 @@ fn create_type_name_with_args(name: &str, variable: &str, be_verbose: bool) -> O
     }
     let first_char = first_char.unwrap();
     if first_char == '-' {
+        if be_verbose {
+            println!("Subtracting endings. ");
+        }
+
         // @future: make this also take a formatting argument. 
         let formatted_string = subtract_ending_off_string(&string_in_pascal_case(name), &variable[1..]);
         if formatted_string.is_err() {
-            println!("Failed to subtract ending {{{:}}}. Reason: {:}", &variable[1..], formatted_string.unwrap_err());
+            println!("Error: Failed to subtract ending {{{:}}}. Reason: {:}", &variable[1..], formatted_string.unwrap_err());
             return None;
         }
 
         return Some(formatted_string.unwrap());
 
     } else if first_char == '+' {
+        if be_verbose {
+            println!("Appending endings. ");
+        }
+
         // @future: make this also take a formatting argument. 
         return Some(
             string_in_pascal_case(&name.to_string()) + 
             &variable[1..]
         ); 
     } else {
+        println!("Formatting into {:} case", variable);
         return match variable {
             "caps"   => { Some(string_in_all_caps(&String::from(name))) },
             "lower"  => { Some(string_in_all_lowercase(name)) },
@@ -216,11 +225,9 @@ fn create_type_name_with_args(name: &str, variable: &str, be_verbose: bool) -> O
             "camel"  => { Some(string_in_camel_case(name)) }, 
             "kabob"  => { Some(string_in_kebob_case(name)) }, 
             _ => {
-                println!("No recognized formatting method for {{{:}}}. Check documentation for valid formatting methods. ", variable);
+                println!("Error: No recognized formatting method for {{{:}}}. Check documentation for valid formatting methods. ", variable);
                 None
             }
         }
     }
-
-    None
 }
