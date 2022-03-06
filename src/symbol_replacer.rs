@@ -114,7 +114,7 @@ pub fn create_replacement_value_that_has_variable(token: &str, harvest_location:
         "FOR_EACH_FILE_IN_DIR" => { create_replacement_value_for_harvest_variable(variable_text, harvest_location, be_verbose) },
         "REPEAT_X_TIMES"       => { Some(String::from("UNIMPLEMENTED")) }, 
         "USER_VAR"             => { Some(String::from("UNIMPLEMENTED")) }, 
-        "FILE_NAME_AS_TYPE"    => { create_type_name_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text, be_verbose) },
+        "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text, be_verbose) },
         "ERR" => None,
         _ => None,
     }
@@ -183,7 +183,7 @@ fn replace_harvest_variables(line: &str, file: HarvestedFile) -> String {
     String::from(line_with_evaluated_variables)
 }
 
-fn create_type_name_with_args(name: &str, variable: &str, be_verbose: bool) -> Option<String> {
+fn file_name_as_type_with_args(name: &str, variable: &str, be_verbose: bool) -> Option<String> {
 
     let first_char = variable.chars().nth(0);
     if first_char.is_none() {
