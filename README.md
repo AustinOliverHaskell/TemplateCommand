@@ -71,20 +71,27 @@ Specifies a template file to use.
 
 # Configuration Files
 
-All of the following files are lists of comma separated values. Running a command that one of these requires without having the file on your system will generate a default one. This file is located alongside tt.exe. 
+tt uses a singular configuration file that is located alongside the executable. This file will be generated if there isnt one whenever tt is first called. This configuration file contains three lists used for enumerations (-p, -l, and -e command flags) as well as a user defined hashmap that contains user defined variables. (See USER_VAR section down below for more information). 
 
-<h2>Language List</h2>
-List of languages to use for the -l flag
-<h2>Platform List</h2>
-List of platforms to use for the -p flag
-<h2>Enumeration List</h2>
-List of user defined enumerations to use for the -e flag
+Example configuration file. (This is the one you'll get by default)
+```JSON
+{
+	"enumeration_list":["c","b","f"],
+	"language_list":["en","fr"],
+	"platform_list":["windows","linux","mac_os"],
+	"user_variables":{
+		"LOOPBACK_ADDR":"127.0.0.1",
+		"VERSION_MANAGEMENT":"git"
+	}
+}
+```
 
-</br>
 </br>
 
 # Template Files
 Template files are files with the name "tt" and an extension. For example tt.cpp will be used when creating a cpp file. These files are located in a directory called templates alongside the tt executable. 
+
+If you've cloned tt from source, there exists a template_exmaples directory to get you started.
 
 <br />
 
@@ -194,6 +201,10 @@ Note: This variable will be skipped without the -e flag.
 >\[\]USER\[\]
 
 Evaluates to the name of the currently logged in user.
+
+>\[\]USER_VAR{Variable name}\[\]
+
+Attempts to lookup a variable with the same name as is inside the brackets. These variables are defined inside the config file under user_variables. 
 
 >\[\]OS\[\]
 
