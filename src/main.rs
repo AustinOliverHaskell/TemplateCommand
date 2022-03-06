@@ -9,6 +9,7 @@ mod output_file_description;
 mod util;
 mod formatter;
 mod file_harvester;
+mod config;
 
 use program_args::*;
 use file_manip::*;
@@ -19,17 +20,18 @@ use output_file_description::*;
 use command_line_documentation::print_all_variables;
 use file_harvester::harvest_files_from_dir_as_string;
 use platform_specific::PLATFORM_SEPARATOR_SLASH;
+use config::Config;
 
 fn main() {
-
-    let default_platform_list:    Vec<String> = vec![String::from("windows"), String::from("linux")];
-    let default_language_list:    Vec<String> = vec![String::from("en"),      String::from("fr")];
-    let default_enumeration_list: Vec<String> = vec![String::from("a"),       String::from("b")];
 
     let mut exe_path_buff = std::env::current_exe().unwrap();
     let _ = exe_path_buff.pop();
     let exe_location:      String = exe_path_buff.into_os_string().into_string().unwrap();
     let template_dir_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "templates";
+
+    let mut defualt_config = Config::default();
+    defualt_config.user_variables.insert("HOME_ADDR".to_string(), "127.0.0.1".to_string());
+    let _ = defualt_config.write(&(exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "config"));
 
     let args = ProgramArguments::create();
 
@@ -67,24 +69,21 @@ fn main() {
 
     let platform_list:    Vec<String>;
     if args.create_one_per_platform {
-        let platform_list_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "platform_list.txt";
-        platform_list = EnumerationList::load(&platform_list_path, &default_platform_list).enumerations;
+        platform_list = defualt_config.platform_list.clone();
     } else {
         platform_list = Vec::new();
     }
 
     let language_list:    Vec<String>;
     if args.create_one_per_language {
-        let language_list_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "language_list.txt";
-        language_list = EnumerationList::load(&language_list_path, &default_language_list).enumerations;
+        language_list = defualt_config.language_list.clone();
     } else {
         language_list = Vec::new();
     }
 
     let enumeration_list: Vec<String>;
     if args.create_one_per_enumeration {
-        let enumeration_list_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "enumeration_list.txt";
-        enumeration_list = EnumerationList::load(&enumeration_list_path, &default_enumeration_list).enumerations;
+        enumeration_list = defualt_config.enumeration_list.clone();
     } else {
         enumeration_list = Vec::new();
     }
