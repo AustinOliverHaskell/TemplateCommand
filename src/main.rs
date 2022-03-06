@@ -31,7 +31,7 @@ fn main() {
     let mut config = Config::load(&config_path);
     if config.is_err() {
         println!("Failed to load configuration file. Creating default one. ");
-        let mut defualt_config = Config::default();
+        let defualt_config = Config::default();
         let _ = defualt_config.write(&(exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "config"));
         config = Ok(defualt_config);
     }
@@ -127,7 +127,7 @@ fn main() {
     }
     
     for file in expanded_list {
-        let processed_file = replace_symbols(&template_file, &file, &args.harvest_directory, args.verbose_output);
+        let processed_file = replace_symbols(&template_file, &file, &args.harvest_directory, &config.user_variables, args.verbose_output);
 
         let file_name;
         if args.file_has_no_extension {

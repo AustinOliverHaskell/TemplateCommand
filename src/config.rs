@@ -29,7 +29,7 @@ impl Config {
 		let arg_dump = serde_json::to_string(&self);
         match arg_dump {
             Err(e) => {
-                return Err("Error: Failed to dump arguments to file. ".to_string());
+                return Err(format!("Error: Failed to dump arguments to file. -- Detailed error: {:}", e).to_string());
             },
             _ => { }
         }

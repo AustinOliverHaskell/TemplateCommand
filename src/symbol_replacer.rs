@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use regex::*;
 
 use crate::template_file_list::UnprocessedTemplateFile;
@@ -13,6 +15,7 @@ pub fn replace_symbols(
     unprocessed_file: &UnprocessedTemplateFile, 
     output_file_description: &OutputFileDescription, 
     harvest_location: &Option<String>, 
+    user_variable_map: &HashMap<String, String>, 
     be_verbose: bool) -> String {
 
     // @Optimize - Don't compile this regex every time this function is called. Make this a static. 
@@ -30,7 +33,7 @@ pub fn replace_symbols(
         let template_start: String = String::from(&processed_template[.._match.unwrap().start()]);
         let template_end:   String = String::from(&processed_template[_match.unwrap().end()..]);
 
-        let replacement_symbol = create_replacement_value(_match.unwrap().as_str(), output_file_description, harvest_location, be_verbose);
+        let replacement_symbol = create_replacement_value(_match.unwrap().as_str(), output_file_description, harvest_location, user_variable_map, be_verbose);
 
         processed_template = template_start + &replacement_symbol + &template_end;
 
@@ -40,7 +43,12 @@ pub fn replace_symbols(
     processed_template
 }
 
-pub fn create_replacement_value(token: &str, output_file_description: &OutputFileDescription, harvest_location: &Option<String>, be_verbose: bool) -> String {
+pub fn create_replacement_value(
+    token: &str, 
+    output_file_description: &OutputFileDescription, 
+    harvest_location: &Option<String>, 
+    user_variable_map: &HashMap<String, String>, 
+    be_verbose: bool) -> String {
 
     if be_verbose {
         println!("Matching against token: {:}", token);
@@ -73,7 +81,7 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
         "[]DEVICE_NAME[]"         => { return whoami::devicename(); },
         "[]VERSION[]"             => {return String::from(env!("CARGO_PKG_VERSION")); }
         _ => {
-            let replacement_string = create_replacement_value_that_has_variable(token, harvest_location, output_file_description, be_verbose);
+            let replacement_string = create_replacement_value_that_has_variable(token, harvest_location, output_file_description, user_variable_map, be_verbose);
             if replacement_string.is_some() {
                 return replacement_string.unwrap();
             }
@@ -87,7 +95,12 @@ pub fn create_replacement_value(token: &str, output_file_description: &OutputFil
     String::from("ERR")
 }
 
-pub fn create_replacement_value_that_has_variable(token: &str, harvest_location: &Option<String>, output_file_description: &OutputFileDescription, be_verbose: bool) -> Option<String> {
+pub fn create_replacement_value_that_has_variable(
+    token: &str, 
+    harvest_location: &Option<String>, 
+    output_file_description: &OutputFileDescription, 
+    user_variable_map: &HashMap<String, String>, 
+    be_verbose: bool) -> Option<String> {
 
     // @Optimize - Don't compile this regex every time this function is called. Make this a static. 
     let regex = Regex::new(r"\[\]([A-z]*)\{(.*)\}\[\]").unwrap();
@@ -113,7 +126,7 @@ pub fn create_replacement_value_that_has_variable(token: &str, harvest_location:
         "EACH_FILE_IN_DIR"     => { Some(harvest_files_from_dir_as_string(harvest_location, &parse_csv_list(variable_text), be_verbose, harvest_location.is_some())) },
         "FOR_EACH_FILE_IN_DIR" => { create_replacement_value_for_harvest_variable(variable_text, harvest_location, be_verbose) },
         "REPEAT_X_TIMES"       => { Some(String::from("UNIMPLEMENTED")) }, 
-        "USER_VAR"             => { Some(String::from("UNIMPLEMENTED")) }, 
+        "USER_VAR"             => { user_variable(variable_text, user_variable_map, be_verbose) }, 
         "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text, be_verbose) },
         "ERR" => None,
         _ => None,
@@ -230,4 +243,25 @@ fn file_name_as_type_with_args(name: &str, variable: &str, be_verbose: bool) -> 
             }
         }
     }
+}
+
+fn user_variable(variable: &str, user_variable_map: &HashMap<String, String>, be_verbose: bool) -> Option<String> {
+
+    if be_verbose {
+        println!("Looking for user variable: {:}", variable);
+    }
+
+    if user_variable_map.contains_key(variable) {
+        let variable_value = user_variable_map[variable].clone();
+
+        if be_verbose {
+            println!("Found variable {:} to have a value of {:}", variable, variable_value);
+        }
+
+        return Some(variable_value);
+    } 
+
+    println!("Error: No user variable with the name of {:} exists in configuration file. ", variable);
+
+    None
 }
