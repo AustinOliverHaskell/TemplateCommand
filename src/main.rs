@@ -1,7 +1,6 @@
 mod program_args;
 mod file_manip;
 mod symbol_replacer;
-mod enumeration_list;
 mod template_file_list;
 mod platform_specific;
 mod command_line_documentation;
@@ -14,7 +13,6 @@ mod config;
 use program_args::*;
 use file_manip::*;
 use symbol_replacer::*;
-use enumeration_list::*;
 use template_file_list::*;
 use output_file_description::*;
 use command_line_documentation::print_all_variables;
@@ -28,10 +26,16 @@ fn main() {
     let _ = exe_path_buff.pop();
     let exe_location:      String = exe_path_buff.into_os_string().into_string().unwrap();
     let template_dir_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "templates";
+    let config_path:       String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "config";
 
-    let mut defualt_config = Config::default();
-    defualt_config.user_variables.insert("HOME_ADDR".to_string(), "127.0.0.1".to_string());
-    let _ = defualt_config.write(&(exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "config"));
+    let mut config = Config::load(&config_path);
+    if config.is_err() {
+        println!("Failed to load configuration file. Creating default one. ");
+        let mut defualt_config = Config::default();
+        let _ = defualt_config.write(&(exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "config"));
+        config = Ok(defualt_config);
+    }
+    let config = config.unwrap();
 
     let args = ProgramArguments::create();
 
@@ -56,6 +60,10 @@ fn main() {
         println!("Using verbose output. ");
     }
 
+    if args.verbose_output {
+        println!("Configuration being used: {:?}", config);
+    }
+
     if args.create_blank {
         write_file(&args.file_name, &String::from(""), args.verbose_output, args.overwrite);
         return;
@@ -69,21 +77,21 @@ fn main() {
 
     let platform_list:    Vec<String>;
     if args.create_one_per_platform {
-        platform_list = defualt_config.platform_list.clone();
+        platform_list = config.platform_list.clone();
     } else {
         platform_list = Vec::new();
     }
 
     let language_list:    Vec<String>;
     if args.create_one_per_language {
-        language_list = defualt_config.language_list.clone();
+        language_list = config.language_list.clone();
     } else {
         language_list = Vec::new();
     }
 
     let enumeration_list: Vec<String>;
     if args.create_one_per_enumeration {
-        enumeration_list = defualt_config.enumeration_list.clone();
+        enumeration_list = config.enumeration_list.clone();
     } else {
         enumeration_list = Vec::new();
     }
