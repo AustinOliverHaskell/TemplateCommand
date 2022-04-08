@@ -79,7 +79,7 @@ pub fn create_replacement_value(
         "[]USER[]"                => { return whoami::username(); },
         "[]OS[]"                  => { return whoami::distro(); },
         "[]DEVICE_NAME[]"         => { return whoami::devicename(); },
-        "[]VERSION[]"             => {return String::from(env!("CARGO_PKG_VERSION")); }
+        "[]VERSION[]"             => {return String::from(env!("CARGO_PKG_VERSION")); },
         _ => {
             let replacement_string = create_replacement_value_that_has_variable(token, harvest_location, output_file_description, user_variable_map, be_verbose);
             if replacement_string.is_some() {
@@ -128,6 +128,7 @@ pub fn create_replacement_value_that_has_variable(
         "REPEAT_X_TIMES"       => { Some(String::from("UNIMPLEMENTED")) }, 
         "USER_VAR"             => { user_variable(variable_text, user_variable_map, be_verbose) }, 
         "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text, be_verbose) },
+        "IMPORT"               => { import_file(variable_text, be_verbose) }
         "ERR" => None,
         _ => None,
     }
@@ -264,4 +265,21 @@ fn user_variable(variable: &str, user_variable_map: &HashMap<String, String>, be
     println!("Error: No user variable with the name of {:} exists in configuration file. ", variable);
 
     None
+}
+
+fn import_file(variable: &str, be_verbose: bool) -> Option<String> {
+
+    use std::fs::read_to_string;
+
+    if be_verbose {
+        println!("Attempting to import file: {:}", variable);
+    }
+
+    let file_contents = read_to_string(variable);
+    if file_contents.is_err() {
+        println!("Failed to load file for import. Make sure that the file exists and that the path is correct. ");
+        return None;
+    }
+
+    return Some(file_contents.unwrap());
 }
