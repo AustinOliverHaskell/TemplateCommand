@@ -27,8 +27,26 @@ pub fn replace_symbols(
         return unprocessed_file.template_file_data.clone(); 
     }
 
-    let mut processed_template = unprocessed_file.template_file_data.clone();
-    let mut _match = regex.find(&unprocessed_file.template_file_data);
+    let processed_template = unprocessed_file.template_file_data.clone();
+    replace_sub_symbols(
+        &processed_template, 
+        output_file_description, 
+        harvest_location, 
+        user_variable_map, 
+        be_verbose)
+}
+
+pub fn replace_sub_symbols(
+    data_to_replace: &String, 
+    output_file_description: &OutputFileDescription, 
+    harvest_location: &Option<String>, 
+    user_variable_map: &HashMap<String, String>, 
+    be_verbose: bool) -> String {
+
+    let regex = Regex::new(r"\[\][A-z]+(\{.*\})*\[\]").unwrap();
+
+    let mut processed_template = data_to_replace.clone();
+    let mut _match = regex.find(&data_to_replace);
     while _match.is_some() {
         let template_start: String = String::from(&processed_template[.._match.unwrap().start()]);
         let template_end:   String = String::from(&processed_template[_match.unwrap().end()..]);
@@ -41,6 +59,7 @@ pub fn replace_symbols(
     }
 
     processed_template
+
 }
 
 pub fn create_replacement_value(
@@ -128,7 +147,8 @@ pub fn create_replacement_value_that_has_variable(
         "REPEAT_X_TIMES"       => { Some(String::from("UNIMPLEMENTED")) }, 
         "USER_VAR"             => { user_variable(variable_text, user_variable_map, be_verbose) }, 
         "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text, be_verbose) },
-        "IMPORT"               => { import_file(variable_text, be_verbose) }
+        "IMPORT"               => { import_file(variable_text, be_verbose) },
+        "BANNER"               => { create_banner(variable_text, output_file_description, harvest_location, user_variable_map, be_verbose) },
         "ERR" => None,
         _ => None,
     }
@@ -283,3 +303,56 @@ fn import_file(variable: &str, be_verbose: bool) -> Option<String> {
 
     return Some(file_contents.unwrap());
 }
+
+fn create_banner(
+    variable: &str, 
+    output_file_description: &OutputFileDescription, 
+    harvest_location: &Option<String>, 
+    user_variable_map: &HashMap<String, String>, 
+    be_verbose: bool) -> Option<String> {
+
+    let parameter_list: Option<(&str, &str)> = variable.split_once("|||");
+
+    if parameter_list.is_none() {
+        println!("Banner variable supplied with insufficiant parameters.");
+        return None;
+    }
+    let parameter_list = parameter_list.unwrap();
+
+    if be_verbose {
+        println!("Parameter list for banner is {:?}", parameter_list);
+    }
+
+    let banner_symbol: &str;
+    let raw_message: String;
+    if parameter_list.0 == "" {
+        banner_symbol = "*";
+        raw_message = String::from(parameter_list.1);
+    }
+    else {
+        banner_symbol = parameter_list.0;
+        raw_message = String::from(parameter_list.1);
+    }
+
+    let message: String = replace_sub_symbols(&raw_message, output_file_description, harvest_location, user_variable_map, be_verbose);
+
+    if be_verbose {
+        println!("Creating banner with symbol {{{:}}}, and message {{{:}}}", banner_symbol, message);
+    }
+
+    // +4 to add an extra symbol and space to the message. 
+    let mut banner: String = String::new();
+    for _ in 0..message.len()+4 {
+        banner += banner_symbol;
+    }
+    banner += PLATFORM_LINE_ENDING;
+
+    banner = banner + banner_symbol + " " + &message + " " + banner_symbol + PLATFORM_LINE_ENDING;
+
+    for _ in 0..message.len()+4 {
+        banner += banner_symbol;
+    }
+    banner += PLATFORM_LINE_ENDING;
+
+    Some(banner)
+} 
