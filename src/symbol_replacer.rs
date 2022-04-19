@@ -311,27 +311,30 @@ fn create_banner(
     user_variable_map: &HashMap<String, String>, 
     be_verbose: bool) -> Option<String> {
 
-    let parameter_list: Option<(&str, &str)> = variable.split_once("|||");
+    // Not using split_once since it's still marked experimental. 
+    let parameter_list: Vec<&str> = variable.split("|||").collect();
 
-    if parameter_list.is_none() {
+    if parameter_list.len() < 2 {
         println!("Banner variable supplied with insufficiant parameters.");
         return None;
     }
-    let parameter_list = parameter_list.unwrap();
 
     if be_verbose {
         println!("Parameter list for banner is {:?}", parameter_list);
     }
 
-    let banner_symbol: &str;
-    let raw_message: String;
-    if parameter_list.0 == "" {
-        banner_symbol = "*";
-        raw_message = String::from(parameter_list.1);
+
+    let mut combined_params: String = parameter_list[1].to_string();
+    if parameter_list.len() >= 3 {
+        for i in 2..parameter_list.len() {
+            combined_params += parameter_list[i];
+        }
     }
-    else {
-        banner_symbol = parameter_list.0;
-        raw_message = String::from(parameter_list.1);
+
+    let mut banner_symbol = parameter_list[0];
+    let raw_message: String = combined_params;
+    if parameter_list[0] == "" {
+        banner_symbol = "*";
     }
 
     let message: String = replace_sub_symbols(&raw_message, output_file_description, harvest_location, user_variable_map, be_verbose);
