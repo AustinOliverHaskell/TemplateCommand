@@ -98,6 +98,17 @@ If you've cloned tt from source, there exists a template_exmaples directory to g
 # Template Variables
 tt supports multiple variables that can be added to your template file. These variables will be replaced with various values as defined below. All template variables start and end with "[]". Some of the more complicated template variables also contain a "{}" section. This allows you to supply format specifiers to those variables.  
 
+>\[\]BANNER{Symbol|||Text}\[\]
+
+Uses the Symbol passed to it to create a banner around the text. For example \[\]BANNER{*|||THIS IS TEXT}\[\] will create the following
+``` C++
+/*
+****************
+* THIS IS TEXT * 
+****************
+*/
+```
+
 >\[\]FILE_NAME_AS_TYPE\[\]
 
 Uses whatever is passed to the -f flag without the extension formatted into pascal case. 
