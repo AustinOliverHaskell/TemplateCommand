@@ -29,9 +29,13 @@ pub fn write_file(path: &String, file_contents: &String, be_verbose: bool, overw
         println!("Attempting to write file {:}", path);
     }
 
+    // File is okay means that we were able to open a file that already exists
     if possible_file.is_ok() && overwrite == false {
         println!("Skipping file {:} since it already exists and -o isn't present. ", path);
         return;
+    } else if possible_file.is_ok() && overwrite {
+        // Open again with truncate on. 
+        possible_file = OpenOptions::new().write(true).truncate(true).open(path);
     } else if possible_file.is_err() {
         possible_file = File::create(path);
         match possible_file {
