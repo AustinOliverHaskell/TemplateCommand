@@ -5,7 +5,7 @@ Command line utility for creating source files from a set of templates. Template
 
 >-b, --blank
 
-Uses -f and creates the file but does not fill it with data. Equivalent to the touch command on linux. 
+Uses the file name passed to create an empty file. Equivalent to the touch command on linux. 
 
 >-d, --debug 
 

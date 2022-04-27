@@ -64,8 +64,8 @@ fn main() {
         println!("Configuration being used: {:?}", config);
     }
 
-    if args.create_blank {
-        write_file(&args.file_name, &String::from(""), args.verbose_output, args.overwrite);
+    if args.create_blank.is_some() {
+        write_file(&args.create_blank.unwrap(), &String::from(""), args.verbose_output, args.overwrite);
         return;
     }
 

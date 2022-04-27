@@ -16,7 +16,7 @@ pub struct ProgramArguments {
     pub create_one_per_platform: bool,
     pub create_one_per_enumeration: bool,
     pub create_one_per_language: bool,
-    pub create_blank: bool,
+    pub create_blank: Option<String>,
 
     pub overwrite: bool,
     pub verbose_output: bool,
@@ -28,6 +28,8 @@ pub struct ProgramArguments {
     pub show_templates: bool,
 
     pub harvest_directory: Option<String>,
+
+    pub shove_header: Option<String>
 }
 
 impl ProgramArguments {
@@ -52,7 +54,10 @@ A full list of the variables supported can be found on the github page for this 
                         .help("File to create. Extension is used to select template to use unless -t flag is also present")
                         .takes_value(true)
                         .required_unless("show_documentation")
-                        .required_unless("show_templates"))
+                        .required_unless("show_templates")
+                        .required_unless("header")
+                        .required_unless("blank")
+                    )
                     .arg(
                         Arg::with_name("overwrite")
                         .short("o")
@@ -62,6 +67,7 @@ A full list of the variables supported can be found on the github page for this 
                         Arg::with_name("blank")
                         .short("b")
                         .long("blank")
+                        .takes_value(true)
                         .help("If present, will create a blank file with the file name specified instead of use a template. This flag does not respect -l -e and -p."))
                     .arg(
                         Arg::with_name("platform")
@@ -110,8 +116,15 @@ A full list of the variables supported can be found on the github page for this 
                         .help("Lists the names of all template files found as well as the directory being used for templates.")
                     )
                     .arg(
-                        Arg::with_name("harvest_directory")
+                        Arg::with_name("header")
                         .short("h")
+                        .long("header")
+                        .takes_value(true)
+                        .help("Uses a found tt.header.x file to prepend to the specified file. ")
+                    )
+                    .arg(
+                        Arg::with_name("harvest_directory")
+                        .short("r")
                         .long("harvest")
                         .takes_value(true)
                         .help("Specifies the harvest directory. This is the directory that will be used for []FOR_EACH_FILE_IN_DIR{}[] and []EACH_FILE_IN_DIR[]. If this isn't present, the current working directory will be used. Currently if you use this argument, all file paths will be generated with the absolute path to that file. ")
@@ -129,10 +142,13 @@ A full list of the variables supported can be found on the github page for this 
         } else {
             harvest_directory = Some(String::from(args.value_of("harvest_directory").unwrap()));
         }
+
+        let header_file = args.value_of("header").unwrap_or("");
+        let blank_file_name = args.value_of("blank").unwrap_or("");
         
         ProgramArguments {
             file_name: file_name.clone(),
-            template_file: String::from(template_name),
+            template_file: template_name.to_string(),
             
             extension: String::from(*extension_list.last().unwrap_or(&"")),
             extension_list: extension_list.iter().map(|str_as_string| String::from(*str_as_string)).collect(),
@@ -144,7 +160,7 @@ A full list of the variables supported can be found on the github page for this 
             create_one_per_platform:    args.is_present("platform"),
             create_one_per_enumeration: args.is_present("enumeration"),
             create_one_per_language:    args.is_present("language"),
-            create_blank:               args.is_present("blank"),
+            create_blank:               if blank_file_name == "" { None } else { Some(blank_file_name.to_string()) },
             
             overwrite:            args.is_present("overwrite"),
             verbose_output:       args.is_present("verbose"),
@@ -157,7 +173,9 @@ A full list of the variables supported can be found on the github page for this 
 
             harvest_directory: harvest_directory,
 
-            file_has_no_extension: extension_list.len() == 1
+            file_has_no_extension: extension_list.len() == 1,
+
+            shove_header: if header_file == "" { None } else { Some(header_file.to_string()) }
         }
     } 
 }
