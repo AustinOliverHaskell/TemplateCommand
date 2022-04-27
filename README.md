@@ -144,6 +144,17 @@ MY_FILE_TEST
 
 Uses the file name and extension of the output file
 
+>\[\]FILE_NAME{-/+ending}\[\]
+
+Uses the file name and extension of the output file but subtracts or appends a different ending before the extension. 
+
+For example
+```
+\[\]FILE_NAME{-_file}\[\]
+```
+
+ran with a file name of my_file.txt will produce my.txt
+
 >\[\]FILE_NAME_IN_CAPS\[\]
 
 Evaluates to the file name but in all caps, useful for creating define guards or enums.

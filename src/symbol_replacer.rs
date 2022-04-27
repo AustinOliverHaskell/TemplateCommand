@@ -149,7 +149,8 @@ pub fn create_replacement_value_that_has_variable(
         "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text, be_verbose) },
         "IMPORT"               => { import_file(variable_text, be_verbose) },
         "BANNER"               => { create_banner(variable_text, output_file_description, harvest_location, user_variable_map, be_verbose) },
-        "ERR" => None,
+        "FILE_NAME"            => { file_name_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text, &output_file_description.extension, be_verbose)},
+        "ERR"                  => None,
         _ => None,
     }
 }
@@ -266,6 +267,45 @@ fn file_name_as_type_with_args(name: &str, variable: &str, be_verbose: bool) -> 
     }
 }
 
+fn file_name_with_args(name: &str, variable: &str, extension: &str, be_verbose: bool) -> Option<String> {
+
+    let first_char = variable.chars().nth(0);
+    if first_char.is_none() {
+        println!("Warning: no variable defined in FILE_NAME yet brackets exist. Remove the brackets or add a variable.");
+        return None;
+    }
+    let first_char = first_char.unwrap();
+    if first_char == '-' {
+        if be_verbose {
+            println!("Subtracting endings. ");
+        }
+
+        // @future: make this also take a formatting argument. 
+        let formatted_string = subtract_ending_off_string(&name, &variable[1..]);
+        if formatted_string.is_err() {
+            println!("Error: Failed to subtract ending {{{:}}}. Reason: {:}", &variable[1..], formatted_string.unwrap_err());
+            return None;
+        }
+
+        return Some(formatted_string.unwrap() + "." + extension);
+
+    } else if first_char == '+' {
+        if be_verbose {
+            println!("Appending endings. ");
+        }
+
+        // @future: make this also take a formatting argument. 
+        return Some(
+            string_in_pascal_case(&name.to_string()) + 
+            &variable[1..] + "." + extension
+        ); 
+    } else {
+        println!("Got unknown variable with FILE_NAME{{}}, only supported actions are +/- endings");
+    }
+
+    None
+}
+
 fn user_variable(variable: &str, user_variable_map: &HashMap<String, String>, be_verbose: bool) -> Option<String> {
 
     if be_verbose {
@@ -358,4 +398,4 @@ fn create_banner(
     banner += PLATFORM_LINE_ENDING;
 
     Some(banner)
-} 
+}

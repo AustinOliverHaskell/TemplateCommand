@@ -85,7 +85,6 @@ pub fn subtract_ending_off_string(base: &str, ending: &str) -> Result<String, St
 
     let ending_start = base.len() - ending.len();
     let ending_to_replace = &base[ending_start..];
-    println!("Ending to replace: {:?}", ending_to_replace);
 
     if ending_to_replace == ending {
         return Ok((&base[..ending_start]).to_string());
