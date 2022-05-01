@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use regex::*;
+use log::*;
 
 use crate::template_file_list::UnprocessedTemplateFile;
 use crate::output_file_description::OutputFileDescription;
@@ -15,8 +16,7 @@ pub fn replace_symbols(
     unprocessed_file: &UnprocessedTemplateFile, 
     output_file_description: &OutputFileDescription, 
     harvest_location: &Option<String>, 
-    user_variable_map: &HashMap<String, String>, 
-    be_verbose: bool) -> String {
+    user_variable_map: &HashMap<String, String> ) -> String {
 
     // @Optimize - Don't compile this regex every time this function is called. Make this a static. 
     let regex = Regex::new(r"\[\][A-z]+(\{.*\})*\[\]").unwrap();
@@ -32,16 +32,14 @@ pub fn replace_symbols(
         &processed_template, 
         output_file_description, 
         harvest_location, 
-        user_variable_map, 
-        be_verbose)
+        user_variable_map)
 }
 
 pub fn replace_sub_symbols(
     data_to_replace: &String, 
     output_file_description: &OutputFileDescription, 
     harvest_location: &Option<String>, 
-    user_variable_map: &HashMap<String, String>, 
-    be_verbose: bool) -> String {
+    user_variable_map: &HashMap<String, String>) -> String {
 
     let regex = Regex::new(r"\[\][A-z]+(\{.*\})*\[\]").unwrap();
 
@@ -51,7 +49,7 @@ pub fn replace_sub_symbols(
         let template_start: String = String::from(&processed_template[.._match.unwrap().start()]);
         let template_end:   String = String::from(&processed_template[_match.unwrap().end()..]);
 
-        let replacement_symbol = create_replacement_value(_match.unwrap().as_str(), output_file_description, harvest_location, user_variable_map, be_verbose);
+        let replacement_symbol = create_replacement_value(_match.unwrap().as_str(), output_file_description, harvest_location, user_variable_map);
 
         processed_template = template_start + &replacement_symbol + &template_end;
 
@@ -66,12 +64,9 @@ pub fn create_replacement_value(
     token: &str, 
     output_file_description: &OutputFileDescription, 
     harvest_location: &Option<String>, 
-    user_variable_map: &HashMap<String, String>, 
-    be_verbose: bool) -> String {
+    user_variable_map: &HashMap<String, String> ) -> String {
 
-    if be_verbose {
-        println!("Matching against token: {:}", token);
-    }
+    info!("Matching against token: {:}", token);
 
     match token {
         "[]FILE_NAME[]"         => { return output_file_description.name_with_extension(); }
@@ -100,14 +95,14 @@ pub fn create_replacement_value(
         "[]DEVICE_NAME[]"         => { return whoami::devicename(); },
         "[]VERSION[]"             => {return String::from(env!("CARGO_PKG_VERSION")); },
         _ => {
-            let replacement_string = create_replacement_value_that_has_variable(token, harvest_location, output_file_description, user_variable_map, be_verbose);
+            let replacement_string = create_replacement_value_that_has_variable(token, harvest_location, output_file_description, user_variable_map);
             if replacement_string.is_some() {
                 return replacement_string.unwrap();
             }
         }
     }
 
-    println!(
+    error!(
         "No match for token {:}, putting 'ERR' in it's place. If you're attempting to use a variable that takes an argument, make sure that the argument and/or '{{}}' is present.", 
         token);
 
@@ -118,8 +113,7 @@ pub fn create_replacement_value_that_has_variable(
     token: &str, 
     harvest_location: &Option<String>, 
     output_file_description: &OutputFileDescription, 
-    user_variable_map: &HashMap<String, String>, 
-    be_verbose: bool) -> Option<String> {
+    user_variable_map: &HashMap<String, String>) -> Option<String> {
 
     // @Optimize - Don't compile this regex every time this function is called. Make this a static. 
     let regex = Regex::new(r"\[\]([A-z]*)\{(.*)\}\[\]").unwrap();
@@ -134,44 +128,39 @@ pub fn create_replacement_value_that_has_variable(
     let token_name    = capture.get(1).map_or("ERR", |t| t.as_str());
     let variable_text = capture.get(2).map_or("ERR", |v| v.as_str());
 
-    if be_verbose {
-        println!("Found variable expression with name {:}, and value {:}", token_name, variable_text);
-    }
+    info!("Found variable expression with name {:}, and value {:}", token_name, variable_text);
 
     match token_name {
         "CURRENT_DATE"         => { Some(get_current_date(variable_text)) },
         "CURRENT_TIME"         => { Some(get_current_time(variable_text)) },
         "PARENT_DIR"           => { Some(String::from("UNIMPLEMENTED")) },
-        "EACH_FILE_IN_DIR"     => { Some(harvest_files_from_dir_as_string(harvest_location, &parse_csv_list(variable_text), be_verbose, harvest_location.is_some())) },
-        "FOR_EACH_FILE_IN_DIR" => { create_replacement_value_for_harvest_variable(variable_text, harvest_location, be_verbose) },
+        "EACH_FILE_IN_DIR"     => { Some(harvest_files_from_dir_as_string(harvest_location, &parse_csv_list(variable_text), harvest_location.is_some())) },
+        "FOR_EACH_FILE_IN_DIR" => { create_replacement_value_for_harvest_variable(variable_text, harvest_location) },
         "REPEAT_X_TIMES"       => { Some(String::from("UNIMPLEMENTED")) }, 
-        "USER_VAR"             => { user_variable(variable_text, user_variable_map, be_verbose) }, 
-        "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text, be_verbose) },
-        "IMPORT"               => { import_file(variable_text, be_verbose) },
-        "BANNER"               => { create_banner(variable_text, output_file_description, harvest_location, user_variable_map, be_verbose) },
-        "FILE_NAME"            => { file_name_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text, &output_file_description.extension, be_verbose)},
+        "USER_VAR"             => { user_variable(variable_text, user_variable_map) }, 
+        "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text) },
+        "IMPORT"               => { import_file(variable_text)},
+        "BANNER"               => { create_banner(variable_text, output_file_description, harvest_location, user_variable_map) },
+        "FILE_NAME"            => { file_name_with_args(&output_file_description.name_expanded_with_enumerations(), variable_text, &output_file_description.extension)},
         "ERR"                  => None,
         _ => None,
     }
 }
 
-fn create_replacement_value_for_harvest_variable(parameters: &str, harvest_location: &Option<String>, be_verbose: bool) -> Option<String>{
+fn create_replacement_value_for_harvest_variable(parameters: &str, harvest_location: &Option<String>) -> Option<String>{
 
     let parameter_list: Vec<&str> = parameters.split("|||").collect();
     if parameter_list.len() != 2 {
-        println!("Incorrect number of arguments to FOR_EACH_FILE_IN_DIR, expected both an ignore list and the line you wish to repeat. If you have no files you want to ignore then leave it blank, but it must be included. ");
+        error!("Incorrect number of arguments to FOR_EACH_FILE_IN_DIR, expected both an ignore list and the line you wish to repeat. If you have no files you want to ignore then leave it blank, but it must be included. ");
         return None;
     }
 
     let ignore_list = parse_csv_list(parameter_list[0]);
-    if be_verbose {
-        for item in &ignore_list {
-            println!("Ignoring file type/name: {:?}", item);
-        }
+    for item in &ignore_list {
+        info!("Ignoring file type/name: {:?}", item);
     }
 
-    let harvested_files = harvest_files_from_dir(harvest_location, &ignore_list, be_verbose);
-
+    let harvested_files = harvest_files_from_dir(harvest_location, &ignore_list);
 
     let user_line_parameter = parameter_list[1];
 
@@ -206,7 +195,7 @@ fn replace_harvest_variables(line: &str, file: HarvestedFile) -> String {
             "{}FILE_NAME_IN_CAPS{}" => evaluated_variable = string_in_all_caps(&replace_if_not_none("", &file.file_name)),
             "{}PATH{}" => evaluated_variable = replace_if_not_none("", &file.path),
             _ => {
-                println!("Unknown variable {:} found when parsing. See documentation for a list of currently supported variables. ", variable);
+                error!("Unknown variable {:} found when parsing. See documentation for a list of currently supported variables. ", variable);
                 evaluated_variable = String::from("ERR");
             }
         }
@@ -218,32 +207,28 @@ fn replace_harvest_variables(line: &str, file: HarvestedFile) -> String {
     String::from(line_with_evaluated_variables)
 }
 
-fn file_name_as_type_with_args(name: &str, variable: &str, be_verbose: bool) -> Option<String> {
+fn file_name_as_type_with_args(name: &str, variable: &str) -> Option<String> {
 
     let first_char = variable.chars().nth(0);
     if first_char.is_none() {
-        println!("Warning: no variable defined in FILE_NAME_AS_TYPE yet brackets exist. Remove the brackets or add a variable.");
+        warn!("No variable defined in FILE_NAME_AS_TYPE yet brackets exist. Remove the brackets or add a variable.");
         return None;
     }
     let first_char = first_char.unwrap();
     if first_char == '-' {
-        if be_verbose {
-            println!("Subtracting endings. ");
-        }
+        info!("Subtracting endings. ");
 
         // @future: make this also take a formatting argument. 
         let formatted_string = subtract_ending_off_string(&string_in_pascal_case(name), &variable[1..]);
         if formatted_string.is_err() {
-            println!("Error: Failed to subtract ending {{{:}}}. Reason: {:}", &variable[1..], formatted_string.unwrap_err());
+            error!("Failed to subtract ending {{{:}}}. Reason: {:}", &variable[1..], formatted_string.unwrap_err());
             return None;
         }
 
         return Some(formatted_string.unwrap());
 
     } else if first_char == '+' {
-        if be_verbose {
-            println!("Appending endings. ");
-        }
+        info!("Appending endings. ");
 
         // @future: make this also take a formatting argument. 
         return Some(
@@ -251,7 +236,6 @@ fn file_name_as_type_with_args(name: &str, variable: &str, be_verbose: bool) -> 
             &variable[1..]
         ); 
     } else {
-        println!("Formatting into {:} case", variable);
         return match variable {
             "caps"   => { Some(string_in_all_caps(&String::from(name))) },
             "lower"  => { Some(string_in_all_lowercase(name)) },
@@ -260,39 +244,35 @@ fn file_name_as_type_with_args(name: &str, variable: &str, be_verbose: bool) -> 
             "camel"  => { Some(string_in_camel_case(name)) }, 
             "kabob"  => { Some(string_in_kebob_case(name)) }, 
             _ => {
-                println!("Error: No recognized formatting method for {{{:}}}. Check documentation for valid formatting methods. ", variable);
+                error!("No recognized formatting method for {{{:}}}. Check documentation for valid formatting methods. ", variable);
                 None
             }
         }
     }
 }
 
-fn file_name_with_args(name: &str, variable: &str, extension: &str, be_verbose: bool) -> Option<String> {
+fn file_name_with_args(name: &str, variable: &str, extension: &str) -> Option<String> {
 
     let first_char = variable.chars().nth(0);
     if first_char.is_none() {
-        println!("Warning: no variable defined in FILE_NAME yet brackets exist. Remove the brackets or add a variable.");
+        warn!("No variable defined in FILE_NAME yet brackets exist. Remove the brackets or add a variable.");
         return None;
     }
     let first_char = first_char.unwrap();
     if first_char == '-' {
-        if be_verbose {
-            println!("Subtracting endings. ");
-        }
-
+        info!("Subtracting endings. ");
+        
         // @future: make this also take a formatting argument. 
         let formatted_string = subtract_ending_off_string(&name, &variable[1..]);
         if formatted_string.is_err() {
-            println!("Error: Failed to subtract ending {{{:}}}. Reason: {:}", &variable[1..], formatted_string.unwrap_err());
+            error!("Failed to subtract ending {{{:}}}. Reason: {:}", &variable[1..], formatted_string.unwrap_err());
             return None;
         }
 
         return Some(formatted_string.unwrap() + "." + extension);
 
     } else if first_char == '+' {
-        if be_verbose {
-            println!("Appending endings. ");
-        }
+        info!("Appending endings. ");
 
         // @future: make this also take a formatting argument. 
         return Some(
@@ -300,44 +280,39 @@ fn file_name_with_args(name: &str, variable: &str, extension: &str, be_verbose: 
             &variable[1..] + "." + extension
         ); 
     } else {
-        println!("Got unknown variable with FILE_NAME{{}}, only supported actions are +/- endings");
+        error!("Got unknown variable with FILE_NAME{{}}, only supported actions are +/- endings");
     }
 
     None
 }
 
-fn user_variable(variable: &str, user_variable_map: &HashMap<String, String>, be_verbose: bool) -> Option<String> {
+fn user_variable(variable: &str, user_variable_map: &HashMap<String, String>) -> Option<String> {
 
-    if be_verbose {
-        println!("Looking for user variable: {:}", variable);
-    }
+    info!("Looking for user variable: {:}", variable);
+    
 
     if user_variable_map.contains_key(variable) {
         let variable_value = user_variable_map[variable].clone();
 
-        if be_verbose {
-            println!("Found variable {:} to have a value of {:}", variable, variable_value);
-        }
+        info!("Found variable {:} to have a value of {:}", variable, variable_value);
 
         return Some(variable_value);
     } 
 
-    println!("Error: No user variable with the name of {:} exists in configuration file. ", variable);
+    error!("No user variable with the name of {:} exists in configuration file. ", variable);
 
     None
 }
 
-fn import_file(variable: &str, be_verbose: bool) -> Option<String> {
+fn import_file(variable: &str) -> Option<String> {
 
     use std::fs::read_to_string;
 
-    if be_verbose {
-        println!("Attempting to import file: {:}", variable);
-    }
+    info!("Attempting to import file: {:}", variable);
 
     let file_contents = read_to_string(variable);
     if file_contents.is_err() {
-        println!("Failed to load file for import. Make sure that the file exists and that the path is correct. ");
+        error!("Failed to load file for import. Make sure that the file exists and that the path is correct. ");
         return None;
     }
 
@@ -348,20 +323,17 @@ fn create_banner(
     variable: &str, 
     output_file_description: &OutputFileDescription, 
     harvest_location: &Option<String>, 
-    user_variable_map: &HashMap<String, String>, 
-    be_verbose: bool) -> Option<String> {
+    user_variable_map: &HashMap<String, String>) -> Option<String> {
 
     // Not using split_once since it's still marked experimental. 
     let parameter_list: Vec<&str> = variable.split("|||").collect();
 
     if parameter_list.len() < 2 {
-        println!("Banner variable supplied with insufficiant parameters.");
+        error!("Banner variable supplied with insufficient parameters.");
         return None;
     }
 
-    if be_verbose {
-        println!("Parameter list for banner is {:?}", parameter_list);
-    }
+    info!("Parameter list for banner is {:?}", parameter_list);
 
 
     let mut combined_params: String = parameter_list[1].to_string();
@@ -377,11 +349,9 @@ fn create_banner(
         banner_symbol = "*";
     }
 
-    let message: String = replace_sub_symbols(&raw_message, output_file_description, harvest_location, user_variable_map, be_verbose);
+    let message: String = replace_sub_symbols(&raw_message, output_file_description, harvest_location, user_variable_map);
 
-    if be_verbose {
-        println!("Creating banner with symbol {{{:}}}, and message {{{:}}}", banner_symbol, message);
-    }
+    info!("Creating banner with symbol {{{:}}}, and message {{{:}}}", banner_symbol, message);
 
     // +4 to add an extra symbol and space to the message. 
     let mut banner: String = String::new();

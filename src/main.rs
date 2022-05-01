@@ -10,6 +10,7 @@ mod util;
 mod formatter;
 mod file_harvester;
 mod config;
+mod logger;
 
 use program_args::*;
 use file_manip::*;
@@ -20,8 +21,19 @@ use command_line_documentation::print_all_variables;
 use file_harvester::harvest_files_from_dir_as_string;
 use platform_specific::PLATFORM_SEPARATOR_SLASH;
 use config::Config;
+use logger::Logger;
+
+use log::*;
 
 fn main() {
+
+    let args = ProgramArguments::create();
+
+    match log::set_boxed_logger(Box::new(Logger::new(args.verbose_output))) {
+        Ok(()) => {},
+        _ => {println!("Failed to initialize logging framework..."); return; } 
+    }
+    log::set_max_level(if args.verbose_output { LevelFilter::Info } else { LevelFilter::Warn });
 
     let mut exe_path_buff = std::env::current_exe().unwrap();
     let _ = exe_path_buff.pop();
@@ -31,17 +43,15 @@ fn main() {
 
     let mut config = Config::load(&config_path);
     if config.is_err() {
-        println!("Failed to load configuration file. Creating default one. ");
+        error!("Failed to load configuration file. Creating default one. ");
         let defualt_config = Config::default();
         let _ = defualt_config.write(&(exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "config"));
         config = Ok(defualt_config);
     }
     let config = config.unwrap();
 
-    let args = ProgramArguments::create();
-
     if args.verbose_output {
-        println!("Program Args: {:?}", &args);
+        info!("Program Args: {:?}", &args);
     }
 
     if args.show_documentation {
@@ -51,26 +61,26 @@ fn main() {
 
     if args.show_templates {
         println!("Looking for template files in {{{:}}}", template_dir_path);
-        let file_list = harvest_files_from_dir_as_string(&Some(template_dir_path), &Vec::new(), false, false);
+        let file_list = harvest_files_from_dir_as_string(&Some(template_dir_path), &Vec::new(), false);
         println!("Found the following templates: ");
         println!("{:}", file_list);
         return;
     }
 
     if args.verbose_output {
-        println!("Using verbose output. ");
+        info!("Using verbose output. ");
     }
 
     if args.verbose_output {
-        println!("Configuration being used: {:?}", config);
+        info!("Configuration being used: {:?}", config);
     }
 
     if args.create_blank.is_some() {
-        write_file(&args.create_blank.unwrap(), &String::from(""), args.verbose_output, args.overwrite);
+        write_file(&args.create_blank.unwrap(), &String::from(""), args.overwrite);
         return;
     }
 
-    let template_file = UnprocessedTemplateFile::new(&args.extension_list, &template_dir_path, args.verbose_output);
+    let template_file = UnprocessedTemplateFile::new(&args.extension_list, &template_dir_path);
     if template_file.is_none() {
         return;
     }
@@ -128,7 +138,7 @@ fn main() {
     }
     
     for file in expanded_list {
-        let processed_file = replace_symbols(&template_file, &file, &args.harvest_directory, &config.user_variables, args.verbose_output);
+        let processed_file = replace_symbols(&template_file, &file, &args.harvest_directory, &config.user_variables);
 
         let file_name;
         if args.file_has_no_extension {
@@ -141,8 +151,7 @@ fn main() {
             println!("----- {:} -----", file_name);
             println!("{:}", processed_file);
         } else {    
-            write_file(&file_name, &processed_file, args.verbose_output, args.overwrite);
+            write_file(&file_name, &processed_file, args.overwrite);
         }
     }
 }
-

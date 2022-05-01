@@ -2,6 +2,8 @@ use crate::file_manip::*;
 use crate::platform_specific::*;
 use crate::util::*;
 
+use log::*;
+
 #[derive(Debug)]
 pub struct HarvestedFile {
     pub extension: Option<String>,
@@ -63,10 +65,10 @@ impl HarvestedFile {
 }
 
 // @todo: finish this, it should probs return a type with the extension, file name, and path contained within. 
-pub fn harvest_files_from_dir(dir: &Option<String>, ignore_list: &Vec<String>, be_verbose: bool) 
+pub fn harvest_files_from_dir(dir: &Option<String>, ignore_list: &Vec<String>) 
     -> Vec<HarvestedFile> {
 
-    let raw_file_list = harvest_all_files_in_dir(dir, ignore_list, be_verbose);
+    let raw_file_list = harvest_all_files_in_dir(dir, ignore_list);
     if raw_file_list.is_none() {
         return Vec::new();
     }
@@ -79,9 +81,9 @@ pub fn harvest_files_from_dir(dir: &Option<String>, ignore_list: &Vec<String>, b
     harvested_file_list
 }
 
-pub fn harvest_files_from_dir_as_string(dir: &Option<String>, ignore_list: &Vec<String>, be_verbose: bool, write_file_names_with_path: bool) -> String {
+pub fn harvest_files_from_dir_as_string(dir: &Option<String>, ignore_list: &Vec<String>, write_file_names_with_path: bool) -> String {
     
-    let harvested_files = harvest_files_from_dir(dir, ignore_list, be_verbose);
+    let harvested_files = harvest_files_from_dir(dir, ignore_list);
 
     let mut return_string = String::new();
     for file in harvested_files {
@@ -96,13 +98,13 @@ pub fn harvest_files_from_dir_as_string(dir: &Option<String>, ignore_list: &Vec<
     return_string
 }
 
-pub fn harvest_all_files_in_dir(directory_path: &Option<String>, ignore_list: &Vec<String>, be_verbose: bool) -> Option<Vec<String>> {
+pub fn harvest_all_files_in_dir(directory_path: &Option<String>, ignore_list: &Vec<String>) -> Option<Vec<String>> {
 
     let pwd: String;
     if directory_path.is_none() {
         let temp_pwd = get_current_path();
         if temp_pwd.is_none() {
-            println!("Failed to figure out which directory to harvest. Was unable to get current path. ");
+            error!("Failed to figure out which directory to harvest. Was unable to get current path. ");
             return None;
         }
         pwd = temp_pwd.unwrap();
@@ -112,7 +114,7 @@ pub fn harvest_all_files_in_dir(directory_path: &Option<String>, ignore_list: &V
 
     let files = std::fs::read_dir(pwd);
     if files.is_err() {
-        println!("Error while reading directory information");
+        error!("Unable to read directory information");
     }
 
     let mut file_list: Vec<String> = Vec::new();
@@ -128,9 +130,7 @@ pub fn harvest_all_files_in_dir(directory_path: &Option<String>, ignore_list: &V
 
         if file_description.is_file() {
 
-            if be_verbose {
-                println!("Found file {:}", &file_name);
-            }
+            info!("Found file {:}", &file_name);
 
             if ignore_list.contains(&file_name) {
                 continue;
@@ -149,10 +149,8 @@ pub fn harvest_all_files_in_dir(directory_path: &Option<String>, ignore_list: &V
         }
     }
 
-    if be_verbose {
-        for file in &file_list {
-            println!("Found file for harvest: {:?}", file);
-        }
+    for file in &file_list {
+        info!("Found file for harvest: {:?}", file);
     }
 
     Some(file_list)

@@ -1,16 +1,16 @@
 use std::fs::{ File, OpenOptions, read_to_string };
 use std::io::Write;
 
+use log::*;
+
 use crate::platform_specific::PLATFORM_SEPARATOR_SLASH;
 
-pub fn load_template_file(template_file_dir_path: &String, template_file_name: &String, be_verbose: bool) -> Option<String>{
+pub fn load_template_file(template_file_dir_path: &String, template_file_name: &String) -> Option<String>{
 
     let template_path: String = String::from(template_file_dir_path) + PLATFORM_SEPARATOR_SLASH + template_file_name;
 
-    if be_verbose {
-        println!("Attempting to load template file: {:}", template_path);
-    }
-
+    info!("Attempting to load template file: {:}", template_path);
+    
     let possible_template_file_data = read_to_string(&template_path);
     if possible_template_file_data.is_err() {
         println!("Failed to load template file. Reason: {:}", possible_template_file_data.unwrap_err());
@@ -22,16 +22,14 @@ pub fn load_template_file(template_file_dir_path: &String, template_file_name: &
     Some(template_file_data)
 }
 
-pub fn write_file(path: &String, file_contents: &String, be_verbose: bool, overwrite: bool) {
+pub fn write_file(path: &String, file_contents: &String, overwrite: bool) {
     let mut possible_file = OpenOptions::new().write(true).open(path);
 
-    if be_verbose {
-        println!("Attempting to write file {:}", path);
-    }
+    info!("Attempting to write file {:}", path);
 
     // File is okay means that we were able to open a file that already exists
     if possible_file.is_ok() && overwrite == false {
-        println!("Skipping file {:} since it already exists and -o isn't present. ", path);
+        error!("Skipping file {:} since it already exists and -o isn't present. ", path);
         return;
     } else if possible_file.is_ok() && overwrite {
         // Open again with truncate on. 
@@ -40,7 +38,7 @@ pub fn write_file(path: &String, file_contents: &String, be_verbose: bool, overw
         possible_file = File::create(path);
         match possible_file {
             Err(e) => {
-                println!("Unable to create file {:} reason: {:}", path, e); 
+                error!("Unable to create file {:} reason: {:}", path, e); 
                 return;
             }
             _ => {}
@@ -50,11 +48,9 @@ pub fn write_file(path: &String, file_contents: &String, be_verbose: bool, overw
     let mut file = possible_file.unwrap();
 
     match file.write_all(file_contents.as_bytes()) {
-        Err(e) => println!("Failed to write contents of file. Reason: {:}", e),
+        Err(e) => error!("Failed to write contents of file. Reason: {:}", e),
         _ => {
-            if be_verbose {
-                println!("Wrote File!"); 
-            }
+            info!("Wrote File!"); 
         }
     }
 }
