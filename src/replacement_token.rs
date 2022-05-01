@@ -46,11 +46,26 @@ impl ReplacementVariable {
 }
 
 impl ReplacementToken {
-	pub fn new(id: String, variables: Vec<ReplacementVariable>) -> Self {
-		ReplacementToken {
-			id: id.clone(),
-			variables: Some(variables.clone())
+
+	pub fn has_variables(self: &Self) -> bool {
+		self.variables.is_some()
+	}
+
+	pub fn get_variable_as_string(self: &Self, index: usize) -> String {
+		if self.variables.is_none() {
+			warn!("Got variable token without having variables. ");
+			return "".to_string();
 		}
+		self.variables.clone().unwrap()[index].rebuild_string()
+	}
+
+	pub fn get_variable_at(self: &Self, index: usize) -> Vec<String> {
+		if self.variables.is_none() {
+			warn!("Got variable token without having variables. ");
+			return Vec::new();
+		}
+
+		self.variables.clone().unwrap()[index].variable_list.clone()
 	}
 
 	pub fn from_string(text: &str) -> Result<Self, String> {

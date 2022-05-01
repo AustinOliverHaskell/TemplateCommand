@@ -1,5 +1,5 @@
 // This file contains all the functions used to convert to CAPS, Pascal Case, and Camel Case. 
-
+use log::*;
 
 pub fn string_in_pascal_case(string: &str) -> String {
 
@@ -80,6 +80,7 @@ pub fn string_in_kebob_case(string: &str) -> String {
 
 pub fn subtract_ending_off_string(base: &str, ending: &str) -> Result<String, String> {
     if base.len() < ending.len() {
+        warn!("Trying to remove ending that doesn't exist -{:}", ending);
         return Err("Subtracting an ending that is longer than the base. ".to_string());
     }
 
@@ -89,7 +90,7 @@ pub fn subtract_ending_off_string(base: &str, ending: &str) -> Result<String, St
     if ending_to_replace == ending {
         return Ok((&base[..ending_start]).to_string());
     } else {
-        println!("Trying to remove ending that doesn't exist -{:}", ending);
+        warn!("Trying to remove ending that doesn't exist -{:}", ending);
         return Err("Subtracting an ending that doesn't exist. ".to_string());
     }
 }

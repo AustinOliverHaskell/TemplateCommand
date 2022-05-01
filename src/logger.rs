@@ -24,11 +24,11 @@ impl log::Log for Logger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            match (record.level()) {
-                Level::Error => println!("{} - {}", record.level().as_str().red(), record.args()), 
-                Level::Warn => println!("{} - {}", record.level().as_str().yellow(), record.args()), 
-                Level::Info => println!("{} - {}", record.level().as_str().purple(), record.args()), 
-                _ => println!("{} - {}", record.level(), record.args())
+            match record.level() {
+                Level::Error => println!("--- {} --- {}", record.level().as_str().red(), record.args()), 
+                Level::Warn => println!("--- {} --- {}", record.level().as_str().yellow(), record.args()), 
+                Level::Info => println!("--- {} --- {}", record.level().as_str().purple(), record.args()), 
+                _ => println!("--- {} --- {}", record.level(), record.args())
             }
         }
     }
