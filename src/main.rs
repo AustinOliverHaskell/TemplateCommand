@@ -1,4 +1,5 @@
 mod program_args;
+mod replacement_token;
 mod file_manip;
 mod symbol_replacer;
 mod template_file_list;
