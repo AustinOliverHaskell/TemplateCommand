@@ -1,3 +1,5 @@
+use log::*;
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReplacementToken {
 	pub id: String,
@@ -26,8 +28,20 @@ impl ReplacementVariable {
 	}
 
 	// Puts all the variables in the list back together. 
-	pub fn rebuild_string() {
+	pub fn rebuild_string(self: &Self) -> String {
+		if self.variable_list.len() == 1 {
+			return self.variable_list[0].to_string();
+		} else if self.variable_list.is_empty() {
+			return "".to_string();
+		} 
 
+		let mut string: String = String::new();
+		for index in 0..self.variable_list.len() - 1 {
+			string += &(self.variable_list[index].to_string() + ", ");
+		}
+		string += &(self.variable_list[self.variable_list.len() - 1].to_string());
+
+		string
 	}
 }
 
@@ -67,18 +81,25 @@ impl ReplacementToken {
 			}
 		}
 
-		println!("Identifier: {:}", identifier);
-		println!("Variable Group: {:?}", variable_group);
+		info!("Identifier: {:}", identifier);
+		info!("Variable Group: {:?}", variable_group);
 
+		let mut variables: Vec<ReplacementVariable> = Vec::new();
 		if variable_group.is_some() {
 			let variable_group_text = variable_group.unwrap();
 
-			let parameter_list = variable_group_text.split("|||");
+			let parameter_list: Vec<&str> = variable_group_text.split("|||").collect();
 
-			println!("Replacement Variables: {:?}", ReplacementVariable::from_string(variable_group.unwrap()));
+			for parameter in parameter_list {
+				info!("Replacement Variable Found: {:?}", ReplacementVariable::from_string(parameter));
+				variables.push(ReplacementVariable::from_string(parameter))
+			}
 		}
 
-		Err("No implementation".to_string())
+		Ok(ReplacementToken {
+			id: identifier.to_string(),
+			variables: if variables.len() == 0 { None } else { Some(variables) }
+		})
 	}
 }
 
@@ -139,18 +160,6 @@ fn token_parse_with_multiple_variables() {
 }
 
 #[test]
-fn token_doesnt_parse_malformed() {
-	let test_text = "FILE_NAME[]";
-
-	let expected_result = ReplacementToken {
-		id: "FILE_NAME".to_string(),
-		variables: None
-	};
-
-	assert!(ReplacementToken::from_string(test_text).is_err())
-}
-
-#[test]
 fn token_parse_without_variables_but_with_brackets() {
 	let test_text = "FILE_NAME{}";
 
@@ -160,4 +169,22 @@ fn token_parse_without_variables_but_with_brackets() {
 	};
 
 	assert_eq!(ReplacementToken::from_string(test_text).unwrap(), expected_result)
+}
+
+#[test]
+fn rebuild_string_multiple_variables() {
+	let test_text = "FOR_EACH_FILE_IN_DIR{qmldir, qrc|||Some, text}";
+
+	let expected_result = "Some, text".to_string();
+
+	assert_eq!(ReplacementToken::from_string(test_text).unwrap().variables.unwrap()[1].rebuild_string(), expected_result)
+}
+
+#[test]
+fn rebuild_string_single_variable() {
+	let test_text = "FOR_EACH_FILE_IN_DIR{qmldir, qrc|||Some}";
+
+	let expected_result = "Some".to_string();
+
+	assert_eq!(ReplacementToken::from_string(test_text).unwrap().variables.unwrap()[1].rebuild_string(), expected_result)
 }
