@@ -50,9 +50,7 @@ fn main() {
     }
     let config = config.unwrap();
 
-    if args.verbose_output {
-        info!("Program Args: {:?}", &args);
-    }
+    info!("Program Args: {:?}", &args);
 
     if args.show_documentation {
         print_all_variables();
@@ -67,13 +65,8 @@ fn main() {
         return;
     }
 
-    if args.verbose_output {
-        info!("Using verbose output. ");
-    }
-
-    if args.verbose_output {
-        info!("Configuration being used: {:?}", config);
-    }
+    info!("Using verbose output. ");
+    info!("Configuration being used: {:?}", config);
 
     if args.create_blank.is_some() {
         write_file(&args.create_blank.unwrap(), &String::from(""), args.overwrite);
