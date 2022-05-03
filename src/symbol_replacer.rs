@@ -87,10 +87,10 @@ pub fn create_replacement_value(
             "FOR_EACH_FILE_IN_DIR" => { create_replacement_value_for_harvest_variable(&token.get_variable_at(0), &token.get_variable_as_string(1), harvest_location) },
             "REPEAT_X_TIMES"       => { Some(String::from("UNIMPLEMENTED")) }, 
             "USER_VAR"             => { user_variable(&token.get_variable_as_string(0), user_variable_map) }, 
-            "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&output_file_description.name_expanded_with_enumerations(), &token.get_variable_as_string(0)) },
+            "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&output_file_description.name_expanded_with_enumerations(), &token.get_variable_at(0)) },
             "IMPORT"               => { import_file(&token.get_variable_as_string(0))},
             "BANNER"               => { create_banner(&token.get_variable_as_string(0), &token.get_variable_as_string(1), output_file_description, harvest_location, user_variable_map) },
-            "FILE_NAME"            => { file_name_with_args(&output_file_description.name_expanded_with_enumerations(), &token.get_variable_as_string(0), &output_file_description.extension)},
+            "FILE_NAME"            => { file_name_with_args(&output_file_description.name_expanded_with_enumerations(), &token.get_variable_at(0), &output_file_description.extension)},
             "ERR"                  => None,
             _ => None,
         }
@@ -137,9 +137,9 @@ pub fn create_replacement_value(
     // @Future: Implement a Did you mean? feature. 
 }
 
-fn create_replacement_value_for_harvest_variable(ignore_list: &Vec<String>, user_line: &str, harvest_location: &Option<String>) -> Option<String>{
+fn create_replacement_value_for_harvest_variable(include_list: &Vec<String>, user_line: &str, harvest_location: &Option<String>) -> Option<String>{
 
-    let harvested_files = harvest_files_from_dir(harvest_location, &ignore_list);
+    let harvested_files = harvest_files_from_dir(harvest_location, &include_list);
 
     let mut replacement_value: String = String::new();
     for file in harvested_files {
@@ -184,77 +184,62 @@ fn replace_harvest_variables(line: &str, file: HarvestedFile) -> String {
     String::from(line_with_evaluated_variables)
 }
 
-fn file_name_as_type_with_args(name: &str, variable: &str) -> Option<String> {
+fn file_name_as_type_with_args(name: &str, variables: &Vec<String>) -> Option<String> {
 
-    let first_char = variable.chars().nth(0);
-    if first_char.is_none() {
-        warn!("No variable defined in FILE_NAME_AS_TYPE yet brackets exist. Remove the brackets or add a variable.");
+    if variables.is_empty() {
+        error!("- INTERNAL - Got an empty list of variables for file_name_as_type_with_args or file_name_with_args");
         return None;
     }
-    let first_char = first_char.unwrap();
-    if first_char == '-' {
-        info!("Subtracting endings. ");
+    let mut formatted_string = name.to_string();
+    for variable in variables {
+        if variable == "" { continue; }
+    
+        let first_char = variable.chars().nth(0).unwrap();
 
-        // @future: make this also take a formatting argument. 
-        let formatted_string = subtract_ending_off_string(&string_in_pascal_case(name), &variable[1..]);
-        if formatted_string.is_err() {
-            return Some(name.to_string());
-        }
-
-        return Some(formatted_string.unwrap());
-
-    } else if first_char == '+' {
-        info!("Appending endings. ");
-
-        // @future: make this also take a formatting argument. 
-        return Some(
-            string_in_pascal_case(&name.to_string()) + 
-            &variable[1..]
-        ); 
-    } else {
-        return match variable {
-            "caps"   => { Some(string_in_all_caps(&String::from(name))) },
-            "lower"  => { Some(string_in_all_lowercase(name)) },
-            "spaced" => { Some(string_split_into_spaces(name)) },
-            "pascal" => { Some(string_in_pascal_case(name)) },
-            "camel"  => { Some(string_in_camel_case(name)) }, 
-            "kabob"  => { Some(string_in_kebob_case(name)) }, 
-            _ => {
-                error!("No recognized formatting method for {{{:}}}. Check documentation for valid formatting methods. ", variable);
-                None
+        info!("Formatted String: {:}", formatted_string);
+    
+        if first_char == '-' {
+            info!("Subtracting endings. ");
+    
+            // @future: make this also take a formatting argument. 
+            let subtracted_string = subtract_ending_off_string(&formatted_string, &variable[1..]);
+            if subtracted_string.is_err() {
+                return Some(formatted_string);
+            } else {
+                formatted_string = subtracted_string.unwrap();
+            }
+        
+        } else if first_char == '+' {
+            info!("Appending endings. ");
+    
+            // @future: make this also take a formatting argument. 
+            formatted_string += &variable[1..];
+        } else {
+            formatted_string = match variable.as_ref() {
+                "caps"   => { string_in_all_caps(&formatted_string) },
+                "lower"  => { string_in_all_lowercase(&formatted_string) },
+                "spaced" => { string_split_into_spaces(&formatted_string) },
+                "pascal" => { string_in_pascal_case(&formatted_string) },
+                "camel"  => { string_in_camel_case(&formatted_string) }, 
+                "kabob"  => { string_in_kebob_case(&formatted_string) }, 
+                _ => {
+                    error!("No recognized formatting method for {{{:}}}. Check documentation for valid formatting methods. ", variable);
+                    return None
+                }
             }
         }
     }
+
+    Some(formatted_string)
 }
 
-fn file_name_with_args(name: &str, variable: &str, extension: &str) -> Option<String> {
-
-    let first_char = variable.chars().nth(0).unwrap();
-    if first_char == '-' {
-        info!("Subtracting endings. ");
-        
-        // @future: make this also take a formatting argument. 
-        let formatted_string = subtract_ending_off_string(&name, &variable[1..]);
-        if formatted_string.is_err() {
-            error!("Failed to subtract ending {{{:}}}. Reason: {:}", &variable[1..], formatted_string.unwrap_err());
-            return None;
-        }
-
-        return Some(formatted_string.unwrap() + "." + extension);
-
-    } else if first_char == '+' {
-        info!("Appending endings. ");
-
-        // @future: make this also take a formatting argument. 
-        return Some(
-            string_in_pascal_case(&name.to_string()) + 
-            &variable[1..] + "." + extension
-        ); 
+fn file_name_with_args(name: &str, variables: &Vec<String>, extension: &str) -> Option<String> {
+    let formatted_string = file_name_as_type_with_args(name, variables);
+    if formatted_string.is_none() {
+        return Some(name.to_string() + "." + extension);
     } else {
-        error!("Got unknown variable with FILE_NAME{{}}, only supported actions are +/- endings");
+        return Some(formatted_string.unwrap() + "." + extension)
     }
-
-    None
 }
 
 fn user_variable(variable: &str, user_variable_map: &HashMap<String, String>) -> Option<String> {
@@ -317,3 +302,82 @@ fn create_banner(
 
     Some(banner)
 }
+
+#[test]
+fn file_name_as_type_with_subtraction() {
+    let expected_string = "Builder".to_string();
+    let test_string = "BuilderManager";
+
+    assert_eq!(Some(expected_string), file_name_as_type_with_args(test_string, &vec!["-Manager".to_string()]));
+}
+
+#[test]
+fn file_name_as_type_with_illegal_subtraction_returns_original_string() {
+    let expected_string = "Builder".to_string();
+    let test_string = "Builder";
+
+    assert_eq!(Some(expected_string), file_name_as_type_with_args(test_string, &vec!["-Manager".to_string()]));
+}
+
+#[test]
+fn file_name_as_type_with_subtraction_and_case_change() {
+
+    let expected_string = "builder".to_string();
+    let test_string = "BuilderManager";
+
+    assert_eq!(
+        Some(expected_string), 
+        file_name_as_type_with_args(test_string, 
+            &vec![
+                "-Manager".to_string(),
+                "lower".to_string()
+        ]));
+}
+
+#[test]
+fn file_name_as_type_with_subtraction_and_addition() {
+
+    let expected_string = "BuilderObserver".to_string();
+    let test_string = "BuilderManager";
+
+    assert_eq!(
+        Some(expected_string), 
+        file_name_as_type_with_args(test_string, 
+            &vec![
+                "-Manager".to_string(),
+                "+Observer".to_string()
+        ]));
+}
+
+#[test]
+fn file_name_as_type_with_subtraction_and_addition_and_case_change() {
+
+    let expected_string = "BUILDEROBSERVER".to_string();
+    let test_string = "BuilderManager";
+
+    assert_eq!(
+        Some(expected_string), 
+        file_name_as_type_with_args(test_string, 
+            &vec![
+                "-Manager".to_string(),
+                "+Observer".to_string(),
+                "caps".to_string()
+        ]));
+}
+
+#[test]
+fn file_name_with_subtraction_and_addition_and_case_change() {
+
+    let expected_string = "BUILDEROBSERVER.h".to_string();
+    let test_string = "BuilderManager";
+
+    assert_eq!(
+        Some(expected_string), 
+        file_name_with_args(test_string, 
+            &vec![
+                "-Manager".to_string(),
+                "+Observer".to_string(),
+                "caps".to_string()]
+            , "h"));
+}
+

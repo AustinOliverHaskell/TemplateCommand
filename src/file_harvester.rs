@@ -65,10 +65,10 @@ impl HarvestedFile {
 }
 
 // @todo: finish this, it should probs return a type with the extension, file name, and path contained within. 
-pub fn harvest_files_from_dir(dir: &Option<String>, ignore_list: &Vec<String>) 
+pub fn harvest_files_from_dir(dir: &Option<String>, include_list: &Vec<String>) 
     -> Vec<HarvestedFile> {
 
-    let raw_file_list = harvest_all_files_in_dir(dir, ignore_list);
+    let raw_file_list = harvest_all_files_in_dir(dir, include_list);
     if raw_file_list.is_none() {
         return Vec::new();
     }
@@ -81,9 +81,9 @@ pub fn harvest_files_from_dir(dir: &Option<String>, ignore_list: &Vec<String>)
     harvested_file_list
 }
 
-pub fn harvest_files_from_dir_as_string(dir: &Option<String>, ignore_list: &Vec<String>, write_file_names_with_path: bool) -> String {
+pub fn harvest_files_from_dir_as_string(dir: &Option<String>, include_list: &Vec<String>, write_file_names_with_path: bool) -> String {
     
-    let harvested_files = harvest_files_from_dir(dir, ignore_list);
+    let harvested_files = harvest_files_from_dir(dir, include_list);
 
     let mut return_string = String::new();
     for file in harvested_files {
@@ -98,7 +98,9 @@ pub fn harvest_files_from_dir_as_string(dir: &Option<String>, ignore_list: &Vec<
     return_string
 }
 
-pub fn harvest_all_files_in_dir(directory_path: &Option<String>, ignore_list: &Vec<String>) -> Option<Vec<String>> {
+pub fn harvest_all_files_in_dir(directory_path: &Option<String>, include_list: &Vec<String>) -> Option<Vec<String>> {
+
+    let include_all_files: bool = include_list.is_empty();
 
     let pwd: String;
     if directory_path.is_none() {
@@ -132,12 +134,14 @@ pub fn harvest_all_files_in_dir(directory_path: &Option<String>, ignore_list: &V
 
             info!("Found file {:}", &file_name);
 
-            if ignore_list.contains(&file_name) {
+            if !include_list.contains(&file_name) && !include_all_files {
+                // Not including all files and this isnt on the include list
                 continue;
             }
 
             let file_extension   = extract_extension_from_file_name(&file_name);
-            if file_extension.is_some() && ignore_list.contains(&file_extension.clone().unwrap()) {
+            if file_extension.is_some() && !include_list.contains(&file_extension.clone().unwrap()) && !include_all_files{
+                // Not including all files and this extension isnt on the include list
                 continue;
             }
             

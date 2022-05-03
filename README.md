@@ -113,7 +113,7 @@ Uses the Symbol passed to it to create a banner around the text. For example \[\
 
 Uses whatever is passed to the -f flag without the extension formatted into pascal case. 
 
->\[\]FILE_NAME_AS_TYPE{-suffix, +suffix}\[\]
+>\[\]FILE_NAME_AS_TYPE{-suffix, +suffix, case}\[\]
 
 Uses whatever is passed to the -f flag without the extension formatted into pascal case. Additionally this will add or subtract whatever is passed in the {}
 
@@ -126,8 +126,6 @@ When the above is run with a file name of model_accessor.h the line above will e
 ``` C++
 Model * ModelAccessor::get_model_instance() { /* impl */ }
 ```
-
->\[\]FILE_NAME_AS_TYPE{case}\[\]
 
 Uses whatever is passed to the -f flag without the extension formatted the case specified in the {}.
 
@@ -151,13 +149,15 @@ my_file_test
 MY_FILE_TEST
 ```
 
+Note that this can be combined with +/- of FILE_NAME_AS_TYPE
+
 >\[\]FILE_NAME\[\]
 
 Uses the file name and extension of the output file
 
->\[\]FILE_NAME{-/+ending}\[\]
+>\[\]FILE_NAME{-/+ending, case}\[\]
 
-Uses the file name and extension of the output file but subtracts or appends a different ending before the extension. 
+Uses the file name and extension of the output file but subtracts or appends a different ending before the extension. Additionally a case can be specified. See FILE_NAME_AS_TYPE for supposed case names. 
 
 For example
 ```
@@ -278,15 +278,17 @@ Evaluates to the current time but uses the format specifier to format the string
 Note: This follows the chrono formatting strings. See here: https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html
 
 
->\[\]EACH_FILE_IN_DIR{ignore list}\[\]
+>\[\]EACH_FILE_IN_DIR{include list}\[\]
 
-Places the name of every file in the current directory (Or the harvest directory if the -h flag is used). This will add a new line after each file name. Additionally, a comma seperated list of extensions to ignore can be added inside the {} curly brackets. If -h is specified this will contain the path to that file aswell. Without -h this will just use the file name without the path to that file. 
+Places the name of every file in the current directory (Or the harvest directory if the -h flag is used). This will add a new line after each file name. Additionally, a comma seperated list of extensions to include can be added inside the {} curly brackets. If -h is specified this will contain the path to that file aswell. Without -h this will just use the file name without the path to that file. 
 
-For example, having \[\]EACH_FILE_IN_DIR{h, cpp}\[\] will expand to every file in the current directory but will ignore files with either .h or .cpp extensions. 
+Running without an include list, ie empty brackets, will include all files in that directory. 
 
->\[\]FOR_EACH_FILE_IN_DIR{ignore list ||| line {}VAR{} line }\[\]
+For example, having \[\]EACH_FILE_IN_DIR{h, cpp}\[\] will expand to every file in the current directory but will only use  files with either .h or .cpp extensions. 
 
-This is the most complex variable that is currently supported. This variable takes two arguments seperated with a tripple pipe |||. The first argument is the set of files to ignore when harvesting files. The second argument is the line that will be repeated for each file. The line provided as the second argument supports the following variables: 
+>\[\]FOR_EACH_FILE_IN_DIR{include list ||| line {}VAR{} line }\[\]
+
+This is the most complex variable that is currently supported. This variable takes two arguments seperated with a tripple pipe |||. The first argument is the set of files to include when harvesting files. The second argument is the line that will be repeated for each file. The line provided as the second argument supports the following variables: 
 
 - FILE_NAME
 - FILE_NAME_AS_TYPE
@@ -294,7 +296,7 @@ This is the most complex variable that is currently supported. This variable tak
 - FILE_NAME_IN_CAPS
 - EXTENSION
 
-The functionality of the above variables is the same as their square-bracket counterparts. 
+The functionality of the above variables is the same as their square-bracket counterparts. This will, in the future, come to use square brackets as well. 
 
 In addition to the above variables the following are supported:
 

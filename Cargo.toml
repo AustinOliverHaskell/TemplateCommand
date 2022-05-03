@@ -1,6 +1,6 @@
 [package]
 name = "tt"
-version = "1.2.8"
+version = "1.2.9"
 authors = ["Austin <ahaskell@carthage.edu>"]
 edition = "2018"
 
