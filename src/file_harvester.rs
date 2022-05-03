@@ -134,16 +134,25 @@ pub fn harvest_all_files_in_dir(directory_path: &Option<String>, include_list: &
 
             info!("Found file {:}", &file_name);
 
-            if !include_list.contains(&file_name) && !include_all_files {
-                // Not including all files and this isnt on the include list
+            if include_list.contains(&file_name) {
+                let explicitly_included_file = file_path.clone().into_os_string().into_string().unwrap();
+                file_list.push(explicitly_included_file);
                 continue;
             }
 
             let file_extension   = extract_extension_from_file_name(&file_name);
             if file_extension.is_some() && !include_list.contains(&file_extension.clone().unwrap()) && !include_all_files{
                 // Not including all files and this extension isnt on the include list
+                info!("Ignoreing file {:} because it's extension is not on the include list. ", file_name);
                 continue;
             }
+
+            if file_extension.is_none() {
+                info!("Skipping file {:} because it was not explicitly included and has no extension. ", file_name);
+                continue;
+            }
+
+            info!("File extension for file {:} is {:?}", file_name, file_extension);
             
             let file_full_path_and_name = file_path.clone().into_os_string().into_string();
             if file_full_path_and_name.is_err() {
