@@ -94,3 +94,49 @@ pub fn subtract_ending_off_string(base: &str, ending: &str) -> Result<String, St
         return Err("Subtracting an ending that doesn't exist. ".to_string());
     }
 }
+
+pub fn format_append_and_remove(string: &str, operations: &Vec<String>) -> Option<String> {
+    if operations.is_empty() {
+        error!("- INTERNAL - Got an empty list of operations for format_append_and_remove. ");
+        return None;
+    }
+
+    info!("Got operations list of: {:?}", operations);
+
+    let mut formatted_string = string.to_string();
+    for operation in operations {
+        let variable = operation.trim();
+    
+        let first_char = variable.chars().nth(0).unwrap();
+        if first_char == '-' {    
+            let subtracted_string = subtract_ending_off_string(&formatted_string, &variable[1..]);
+            match subtracted_string {
+                Ok(subtracted_string) => formatted_string = subtracted_string,
+                Err(_) => return Some(formatted_string)
+            }
+        } else if first_char == '+' {    
+            formatted_string += &variable[1..];
+        } else {
+            formatted_string = match variable.as_ref() {
+                "caps"   => { string_in_all_caps(&formatted_string) },
+                "lower"  => { string_in_all_lowercase(&formatted_string) },
+                "spaced" => { string_split_into_spaces(&formatted_string) },
+                "pascal" => { string_in_pascal_case(&formatted_string) },
+                "camel"  => { string_in_camel_case(&formatted_string) }, 
+                "kabob"  => { string_in_kebob_case(&formatted_string) }, 
+                _ => {
+                    error!("No recognized formatting method for {{{:}}}. Check documentation for valid formatting methods. ", variable);
+                    return None
+                }
+            }
+        }
+    }
+
+    Some(formatted_string)
+}
+
+pub fn format_append_and_remove_but_ensure_formatted_to_type(string: &str, operations: &Vec<String>, default_formatting: String) -> Option<String> {
+    let mut operations = operations.clone();
+    operations.insert(0, default_formatting);
+    format_append_and_remove(string, &operations)
+}

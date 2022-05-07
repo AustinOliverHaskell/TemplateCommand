@@ -1,5 +1,5 @@
 mod program_args;
-mod replacement_token;
+mod token;
 mod file_manip;
 mod symbol_replacer;
 mod template_file_list;
@@ -9,8 +9,10 @@ mod output_file_description;
 mod util;
 mod formatter;
 mod file_harvester;
+mod file_context;
 mod config;
 mod logger;
+mod parser;
 
 use program_args::*;
 use file_manip::*;

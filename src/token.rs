@@ -1,17 +1,17 @@
 use log::*;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct ReplacementToken {
+pub struct Token {
 	pub id: String,
-	pub variables: Option<Vec<ReplacementVariable>>
+	pub variables: Option<Vec<TokenVariable>>
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct ReplacementVariable {
+pub struct TokenVariable {
 	pub variable_list: Vec<String>
 }
 
-impl ReplacementVariable {
+impl TokenVariable {
 	pub fn from_string(text: &str) -> Self {
 
 		let items: Vec<&str> = text.split(",").collect();
@@ -19,10 +19,10 @@ impl ReplacementVariable {
 
 		for item in items {
 			if item == "" { continue; }
-			formatted_items.push(item.trim().to_string());
+			formatted_items.push(item.to_string());
 		}
 
-		ReplacementVariable {
+		Self {
 			variable_list: formatted_items
 		}
 	}
@@ -45,7 +45,7 @@ impl ReplacementVariable {
 	}
 }
 
-impl ReplacementToken {
+impl Token {
 
 	pub fn has_variables(self: &Self) -> bool {
 		self.variables.is_some()
@@ -53,7 +53,7 @@ impl ReplacementToken {
 
 	pub fn get_variable_as_string(self: &Self, index: usize) -> String {
 		if self.variables.is_none() {
-			warn!("Got variable token without having variables. ");
+			warn!("Attempted to get variable token without having variables. ");
 			return "".to_string();
 		}
 		self.variables.clone().unwrap()[index].rebuild_string()
@@ -61,7 +61,7 @@ impl ReplacementToken {
 
 	pub fn get_variable_at(self: &Self, index: usize) -> Vec<String> {
 		if self.variables.is_none() {
-			warn!("Got variable token without having variables. ");
+			warn!("Attempted to get variable token without having variables. ");
 			return Vec::new();
 		}
 
@@ -72,7 +72,7 @@ impl ReplacementToken {
 		use regex::*;
 
 		let identifier_regex = Regex::new(r"[A-Z_]+").unwrap();
-		let variable_group_regex = Regex::new(r"\{(.*)\}").unwrap();
+		let variable_group_regex = Regex::new(r"\{((.|\s)*)\}").unwrap();
 
 		let identifier_capture_groups: Vec<Captures> = identifier_regex.captures_iter(text).collect();
 		let variable_capture_groups: Vec<Captures> = variable_group_regex.captures_iter(text).collect();
@@ -99,19 +99,19 @@ impl ReplacementToken {
 		info!("Identifier: {:}", identifier);
 		info!("Variable Group: {:?}", variable_group);
 
-		let mut variables: Vec<ReplacementVariable> = Vec::new();
+		let mut variables: Vec<TokenVariable> = Vec::new();
 		if variable_group.is_some() {
 			let variable_group_text = variable_group.unwrap();
 
 			let parameter_list: Vec<&str> = variable_group_text.split("|||").collect();
 
 			for parameter in parameter_list {
-				info!("Replacement Variable Found: {:?}", ReplacementVariable::from_string(parameter));
-				variables.push(ReplacementVariable::from_string(parameter))
+				info!("Replacement Variable Found: {:?}", TokenVariable::from_string(parameter));
+				variables.push(TokenVariable::from_string(parameter))
 			}
 		}
 
-		Ok(ReplacementToken {
+		Ok(Token {
 			id: identifier.to_string(),
 			variables: if variables.len() == 0 { None } else { Some(variables) }
 		})
@@ -124,22 +124,22 @@ fn token_parse_without_variables() {
 
 	let test_text = "FILE_NAME";
 
-	let expected_result = ReplacementToken {
+	let expected_result = Token {
 		id: "FILE_NAME".to_string(),
 		variables: None
 	};
 
-	assert_eq!(ReplacementToken::from_string(test_text).unwrap(), expected_result)
+	assert_eq!(Token::from_string(test_text).unwrap(), expected_result)
 }
 
 #[test]
 fn token_parse_with_variable() {
 	let test_text = "FILE_NAME{-_model}";
 
-	let expected_result = ReplacementToken {
+	let expected_result = Token {
 		id: "FILE_NAME".to_string(),
 		variables: Some(vec![
-			ReplacementVariable {
+			TokenVariable {
 				variable_list: vec![
 					"-_model".to_string()
 				]
@@ -147,23 +147,23 @@ fn token_parse_with_variable() {
 		])
 	};
 
-	assert_eq!(ReplacementToken::from_string(test_text).unwrap(), expected_result)
+	assert_eq!(Token::from_string(test_text).unwrap(), expected_result)
 }
 
 #[test]
 fn token_parse_with_multiple_variables() {
 	let test_text = "FOR_EACH_FILE_IN_DIR{qmldir, qrc|||Some text}";
 
-	let expected_result = ReplacementToken {
+	let expected_result = Token {
 		id: "FOR_EACH_FILE_IN_DIR".to_string(),
 		variables: Some(vec![
-			ReplacementVariable {
+			TokenVariable {
 				variable_list: vec![
 					"qmldir".to_string(),
 					"qrc".to_string()
 				]
 			}, 
-			ReplacementVariable {
+			TokenVariable {
 				variable_list: vec![
 					"Some text".to_string()
 				]
@@ -171,19 +171,19 @@ fn token_parse_with_multiple_variables() {
 		])
 	};
 
-	assert_eq!(ReplacementToken::from_string(test_text).unwrap(), expected_result)
+	assert_eq!(Token::from_string(test_text).unwrap(), expected_result)
 }
 
 #[test]
 fn token_parse_without_variables_but_with_brackets() {
 	let test_text = "FILE_NAME{}";
 
-	let expected_result = ReplacementToken {
+	let expected_result = Token {
 		id: "FILE_NAME".to_string(),
 		variables: None
 	};
 
-	assert_eq!(ReplacementToken::from_string(test_text).unwrap(), expected_result)
+	assert_eq!(Token::from_string(test_text).unwrap(), expected_result)
 }
 
 #[test]
@@ -192,7 +192,7 @@ fn rebuild_string_multiple_variables() {
 
 	let expected_result = "Some, text".to_string();
 
-	assert_eq!(ReplacementToken::from_string(test_text).unwrap().variables.unwrap()[1].rebuild_string(), expected_result)
+	assert_eq!(Token::from_string(test_text).unwrap().variables.unwrap()[1].rebuild_string(), expected_result)
 }
 
 #[test]
@@ -201,5 +201,5 @@ fn rebuild_string_single_variable() {
 
 	let expected_result = "Some".to_string();
 
-	assert_eq!(ReplacementToken::from_string(test_text).unwrap().variables.unwrap()[1].rebuild_string(), expected_result)
+	assert_eq!(Token::from_string(test_text).unwrap().variables.unwrap()[1].rebuild_string(), expected_result)
 }
