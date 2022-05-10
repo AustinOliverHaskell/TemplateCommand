@@ -96,7 +96,7 @@ impl Parser {
                 },
                 _ => {
 
-                    if !(character.is_alphabetic() || character == '_') && is_in_token {
+                    if !(character.is_alphabetic() || character == '_') && is_in_token && !is_in_parameters {
                         is_in_token = false;
                     }
 
@@ -164,8 +164,6 @@ fn token_with_sub_tokens_parses() {
         []FILE_NAME_WITHOUT_EXTENSION[] 1.0 []FILE_NAME[]}[] Some other text after".to_string();
 
     let found_tokens = Parser::find_all_tokens(&test_string);
-
-    //println!("{:}", test_string[found_tokens[0].start..found_tokens[0].end].to_string());
     
     assert_eq!(vec![ FoundToken {
         start: 23,
@@ -180,8 +178,6 @@ fn token_with_sub_tokens_and_brackets_parses() {
         []FILE_NAME_WITHOUT_EXTENSION[] {1.0} []FILE_NAME[]}[] Some other text after".to_string();
 
     let found_tokens = Parser::find_all_tokens(&test_string);
-
-    //println!("{:}", test_string[found_tokens[0].start..found_tokens[0].end].to_string());
     
     assert_eq!(vec![ FoundToken {
         start: 23,

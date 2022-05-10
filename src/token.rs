@@ -37,7 +37,7 @@ impl TokenVariable {
 
 		let mut string: String = String::new();
 		for index in 0..self.variable_list.len() - 1 {
-			string += &(self.variable_list[index].to_string() + ", ");
+			string += &(self.variable_list[index].to_string() + ",");
 		}
 		string += &(self.variable_list[self.variable_list.len() - 1].to_string());
 
@@ -152,7 +152,7 @@ fn token_parse_with_variable() {
 
 #[test]
 fn token_parse_with_multiple_variables() {
-	let test_text = "FOR_EACH_FILE_IN_DIR{qmldir, qrc|||Some text}";
+	let test_text = "FOR_EACH_FILE_IN_DIR{qmldir,qrc|||Some text}";
 
 	let expected_result = Token {
 		id: "FOR_EACH_FILE_IN_DIR".to_string(),

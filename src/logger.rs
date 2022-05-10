@@ -24,14 +24,18 @@ impl log::Log for Logger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            match record.level() {
-                Level::Error => println!("--- {} --- {}", record.level().as_str().red(), record.args()), 
-                Level::Warn => println!("--- {} --- {}", record.level().as_str().yellow(), record.args()), 
-                Level::Info => println!("--- {} --- {}", record.level().as_str().purple(), record.args()), 
-                _ => println!("--- {} --- {}", record.level(), record.args())
-            }
+            println!("{}| {}", map_error_level_to_colored_string(record.level()), record.args());
         }
     }
 
     fn flush(&self) {} 
+}
+
+fn map_error_level_to_colored_string(level: Level) -> ColoredString {
+    match level {
+        Level::Info  => "---INFO--- ".to_string().purple(),
+        Level::Warn  => "--WARNING--".to_string().yellow(),
+        Level::Error => "---ERROR---".to_string().red(),
+        _            => "---MISC--- ".to_string().white()
+    }
 }

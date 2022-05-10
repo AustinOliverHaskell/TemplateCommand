@@ -9,7 +9,9 @@ pub struct Config {
 	pub enumeration_list: Vec<String>,
 	pub language_list: Vec<String>,
 	pub platform_list: Vec<String>,
-	pub user_variables: HashMap<String, String>
+	pub user_variables: HashMap<String, String>,
+
+	pub partner_file_map: HashMap<String, String>
 }
 
 impl Config {
@@ -52,11 +54,16 @@ impl Config {
 			enumeration_list: vec!["a".to_string(), "b".to_string()],
 			language_list: vec!["en".to_string(), "fr".to_string()],
 			platform_list: vec!["windows".to_string(), "linux".to_string(), "mac_os".to_string()],
-			user_variables: HashMap::new()
+			user_variables: HashMap::new(),
+			partner_file_map: HashMap::new()
 		};
 
 		config.user_variables.insert("LOOPBACK_ADDR".to_string(), "127.0.0.1".to_string());
 		config.user_variables.insert("VERSION_MANAGEMENT".to_string(), "git".to_string());
+
+		config.partner_file_map.insert("h".to_string(), "cpp".to_string());
+		config.partner_file_map.insert("c".to_string(), "h".to_string());
+		config.partner_file_map.insert("cpp".to_string(), "h".to_string());
 
 		config
 	}

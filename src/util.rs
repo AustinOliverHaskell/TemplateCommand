@@ -1,3 +1,5 @@
+use crate::PLATFORM_SEPARATOR_SLASH;
+
 pub fn replace_if_not_none(default: &str, replacement_val: &Option<String>) -> String {
     if replacement_val.is_none() {
         return String::from(default);
@@ -81,6 +83,15 @@ pub fn extract_file_name_and_extension_from_path(file: &str) -> Option<String> {
     } else {
         Some(String::from(ending))
     }
+}
+
+pub fn get_template_directory() -> Result<String, String> {
+    let mut exe_path_buff = std::env::current_exe().unwrap();
+    let _ = exe_path_buff.pop();
+    let exe_location:      String = exe_path_buff.into_os_string().into_string().unwrap();
+    let template_dir_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "templates";
+
+    Ok(template_dir_path)
 }
 
 #[test]

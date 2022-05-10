@@ -133,7 +133,7 @@ fn main() {
     }
     
     for file in expanded_list {
-        let processed_file = replace_symbols(&template_file, &file, &args.harvest_directory, &config.user_variables);
+        let processed_file = replace_symbols(&template_file, &file, &args.harvest_directory, &config);
 
         let file_name;
         if args.file_has_no_extension {
