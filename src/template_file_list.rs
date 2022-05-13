@@ -4,6 +4,9 @@ use crate::platform_specific::PLATFORM_SEPARATOR_SLASH;
 use log::*;
 
 const TEMPLATE_FILE_START: &str = "template.";
+
+// This const will come into play when the shove header functionality is implemented. 
+#[allow(dead_code)]
 const HEADER_FILE_START: &str = "header.";
 
 #[derive(Debug)]

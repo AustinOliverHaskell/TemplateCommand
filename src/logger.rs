@@ -1,4 +1,4 @@
-use log::{Record, Level, Metadata};
+use log::{Record, Level, Metadata, LevelFilter};
 use colored::*;
 
 pub struct Logger {
@@ -11,6 +11,14 @@ impl Logger {
             verbose: is_verbose
         }
     }
+
+    pub fn set_global_logger(is_verbose: bool) {
+        match log::set_boxed_logger(Box::new(Logger::new(is_verbose))) {
+            Ok(()) => {},
+            _ => {println!("Failed to initialize logging framework..."); return; } 
+        }
+        log::set_max_level(if is_verbose { LevelFilter::Info } else { LevelFilter::Warn });
+        }
 }
 
 impl log::Log for Logger {

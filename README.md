@@ -166,10 +166,6 @@ For example
 
 ran with a file name of my_file.txt will produce my.txt
 
->\[\]FILE_NAME_IN_CAPS\[\]
-
-Evaluates to the file name but in all caps, useful for creating define guards or enums.
-
 >\[\]EXTENSION\[\]
 
 Evaluates to the right most extension of whatever is passed to -f. If there is no extension, this evaluates to the same thing as \[\]FILE_NAME\[\]

@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use log::*;
 
 use crate::template_file_list::UnprocessedTemplateFile;
-use crate::output_file_description::OutputFileDescription;
 use crate::file_manip::{get_current_path, get_current_dir_name};
 use crate::util::*;
 use crate::formatter::*;
@@ -11,12 +10,13 @@ use crate::file_harvester::*;
 use crate::token::*;
 use crate::parser::*;
 use crate::config::Config;
+use crate::file_context::*;
 
 use crate::platform_specific::*;
 
 pub fn replace_symbols(
     unprocessed_file: &UnprocessedTemplateFile, 
-    output_file_description: &OutputFileDescription, 
+    file_context: &FileContext, 
     harvest_location: &Option<String>, 
     config: &Config) -> String {
 
@@ -29,17 +29,16 @@ pub fn replace_symbols(
     let processed_template = unprocessed_file.template_file_data.clone();
     replace_sub_symbols(
         &processed_template, 
-        output_file_description, 
+        file_context, 
         harvest_location, 
         config)
 }
 
 pub fn replace_sub_symbols(
     data_to_replace: &String, 
-    output_file_description: &OutputFileDescription, 
+    file_context: &FileContext, 
     harvest_location: &Option<String>, 
     config: &Config) -> String {
-
 
     let mut processed_template = data_to_replace.clone();
     let mut token = Parser::find_first_token(&processed_template);
@@ -52,7 +51,7 @@ pub fn replace_sub_symbols(
 
         let replacement_symbol = create_replacement_value(
             &processed_template[found_token.start..found_token.end], 
-            output_file_description, 
+            file_context, 
             harvest_location, 
             &config);
 
@@ -65,14 +64,40 @@ pub fn replace_sub_symbols(
 
 }
 
+pub fn create_replacement_value_with_parent_context(
+    token_text: &str, 
+    file_context: &FileContext, 
+    parent_context: &FileContext,
+    harvest_location: &Option<String>, 
+    config: &Config) -> String {
+
+    let token = Token::from_string(token_text);
+    if token.is_err() {
+        error!("Failed to parse token");
+        return "ERR".to_string()
+    }
+    let token = token.unwrap();
+    info!("Harvest token: {:?}", token);
+
+    let replacement_value: String;
+    replacement_value = match token.id.as_ref() {
+        "IGNORE_HARVEST_FILE_NAME" => parent_context.name.to_string(), 
+        "IGNORE_HARVEST_FILE_PATH" => "Err".to_string(), 
+        _ => create_replacement_value(token_text, file_context, harvest_location, config)
+    };
+    
+
+    replacement_value
+}
+
 pub fn create_replacement_value(
     token_text: &str, 
-    output_file_description: &OutputFileDescription, 
+    file_context: &FileContext, 
     harvest_location: &Option<String>, 
     config: &Config) -> String {
 
     info!("Matching against token: {:}", token_text);
-    info!("OutputFileDescription: {:?}", output_file_description);
+    info!("File Context: {:?}", file_context);
 
     let token = Token::from_string(token_text);
     if token.is_err() {
@@ -89,15 +114,15 @@ pub fn create_replacement_value(
             "CURRENT_TIME"         => { Some(get_current_time(&token.get_variable_as_string(0))) },
             "PARENT_DIR"           => { Some("UNIMPLEMENTED".to_string()) },
             "EACH_FILE_IN_DIR"     => { Some(harvest_files_from_dir_as_string(harvest_location, &token.get_variable_at(0), harvest_location.is_some())) },
-            "FOR_EACH_FILE_IN_DIR" => { for_each_file_in_dir(&token, harvest_location, &config) },
+            "FOR_EACH_FILE_IN_DIR" => { for_each_file_in_dir(&token, &file_context, harvest_location, &config) },
             "REPEAT_X_TIMES"       => { Some("UNIMPLEMENTED".to_string()) }, 
             "USER_VAR"             => { user_variable(&token.get_variable_as_string(0), &config.user_variables) }, 
-            "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&output_file_description.name_expanded_with_enumerations(), &token) },
+            "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&file_context.expand_with_enumerations(), &token) },
             "IMPORT"               => { import_file(&token) },
             "RELATIVE_IMPORT"      => { Some("UNIMPLEMENTED".to_string()) },         
-            "BANNER"               => { create_banner(&token.get_variable_as_string(0), &token.get_variable_as_string(1), output_file_description, harvest_location, config) },
-            "FILE_NAME"            => { file_name_with_args(&output_file_description.name_expanded_with_enumerations(), &token, &output_file_description.extension)},
-            "FILE_NAME_WITHOUT_EXTENSION" => { file_name_without_extension_with_args(&output_file_description.name.clone(), &token)}
+            "BANNER"               => { create_banner(&token.get_variable_as_string(0), &token.get_variable_as_string(1), file_context, harvest_location, config) },
+            "FILE_NAME"            => { file_name_with_args(&file_context.expand_with_enumerations(), &token, &file_context.extension)},
+            "FILE_NAME_WITHOUT_EXTENSION" => { file_name_without_extension_with_args(&file_context.name.clone(), &token)}
             "HARVEST_SUBDIR"       => { Some("UNIMPLEMENTED".to_string()) },
             "HARVEST_EACH_SUBDIR"  => { Some("UNIMPLEMENTED".to_string()) },
             "DEFINE_TEMPLATE_VAR"  => { Some("UNIMPLEMENTED".to_string()) },
@@ -107,21 +132,20 @@ pub fn create_replacement_value(
         }
     } else {
         replacement_value = match token.id.as_ref() {
-            "FILE_NAME"           => { Some(output_file_description.name_with_extension()) }
-            "FILE_NAME_AS_TYPE"   => { Some(string_in_pascal_case(&output_file_description.name_expanded_with_enumerations())) },
-            "FILE_NAME_IN_CAPS"   => { Some(string_in_all_caps(&output_file_description.name_expanded_with_enumerations())) },
-            "FILE_NAME_WITHOUT_EXTENSION" => { Some(output_file_description.name.clone()) }
-            "PARTNER_FILE"        => { find_partner_file(&output_file_description, &config.partner_file_map) }, 
-            "EXTENSION"           => { Some(output_file_description.extension.clone()) },
+            "FILE_NAME"           => { Some(file_context.name_with_extension()) }
+            "FILE_NAME_AS_TYPE"   => { Some(string_in_pascal_case(&file_context.expand_with_enumerations())) },
+            "FILE_NAME_WITHOUT_EXTENSION" => { Some(file_context.name.clone()) }
+            "PARTNER_FILE"        => { find_partner_file(&file_context, &config.partner_file_map) }, 
+            "EXTENSION"           => { Some(file_context.extension.clone()) },
             "DIR"                 => { Some(get_current_dir_name().unwrap_or(String::new()))},
             "DIR_AS_TYPE"         => { Some(string_in_pascal_case(&get_current_dir_name().unwrap_or(String::new()))) },
             "PWD"                 => { Some(get_current_path().unwrap_or(String::new())) },
             "PATH"                => { Some(".".to_string())},   
             "CURRENT_DATE"        => { Some(get_current_date("%m-%d-%Y")) },
             "CURRENT_TIME"        => { Some(get_current_time("%H:%M")) },
-            "PLATFORM"            => { Some(replace_if_not_none("[]PLATFORM[]",    &output_file_description.platform))    },
-            "LANGUAGE"            => { Some(replace_if_not_none("[]LANGUAGE[]",    &output_file_description.language))    },
-            "ENUMERATION"         => { Some(replace_if_not_none("[]ENUMERATION[]", &output_file_description.enumeration)) },
+            "PLATFORM"            => { Some(replace_if_not_none("[]PLATFORM[]",    &file_context.enumerations.platform))    },
+            "LANGUAGE"            => { Some(replace_if_not_none("[]LANGUAGE[]",    &file_context.enumerations.language))    },
+            "ENUMERATION"         => { Some(replace_if_not_none("[]ENUMERATION[]", &file_context.enumerations.user_defined)) },
             "USER"                => { Some(whoami::username()) },
             "OS"                  => { Some(whoami::distro()) },
             "DEVICE_NAME"         => { Some(whoami::devicename()) },
@@ -142,7 +166,7 @@ pub fn create_replacement_value(
     // @Future: Implement a Did you mean? feature. 
 }
 
-fn for_each_file_in_dir(token: &Token, harvest_location: &Option<String>, config: &Config) -> Option<String>{
+fn for_each_file_in_dir(token: &Token, file_context: &FileContext, harvest_location: &Option<String>, config: &Config) -> Option<String>{
 
     let token = token.clone();
 
@@ -158,7 +182,13 @@ fn for_each_file_in_dir(token: &Token, harvest_location: &Option<String>, config
 
     let mut replacement_value: String = String::new();
     for file in harvested_files {
-        replacement_value += &(replace_harvest_variables(&user_line, file, harvest_location, config));
+        let mut harvest_file_context = FileContext::blank();
+
+        harvest_file_context.name = replace_if_not_none("", &file.file_name);
+        harvest_file_context.path = replace_if_not_none("", &file.path);
+        harvest_file_context.extension = replace_if_not_none("", &file.extension);
+
+        replacement_value += &(replace_harvest_variables(&user_line, &harvest_file_context, file_context, harvest_location, config));
     }
 
     info!("--- Replacement Value: {:?} --- ", replacement_value);
@@ -166,19 +196,19 @@ fn for_each_file_in_dir(token: &Token, harvest_location: &Option<String>, config
     Some(replacement_value)
 }
 
-fn replace_harvest_variables(line: &str, file: HarvestedFile, harvest_location: &Option<String>, config: &Config) -> String {
+fn replace_harvest_variables(
+    line: &str, 
+    file_context: &FileContext, 
+    parent_file_context: &FileContext, 
+    harvest_location: &Option<String>, 
+    config: &Config) -> String {
    
+    // @todo: This function can go away now that the refactor is almost done 
     // @Hack: This shouldnt be getting all this stuff passed down. This will all hopefully go away with the file_context stuff being worked on. 
-    let line_with_evaluated_variables = replace_sub_symbols(
+    let line_with_evaluated_variables = create_replacement_value_with_parent_context(
         &line.to_string(), 
-        &OutputFileDescription {
-            enumeration: None,
-            platform: None,
-            language: None,
-
-            extension: replace_if_not_none("", &file.extension),
-            name: replace_if_not_none("", &file.file_name)
-        },
+        &file_context,
+        parent_file_context, 
         harvest_location, config
     );
 
@@ -269,11 +299,11 @@ fn import_file(token: &Token) -> Option<String> {
 fn create_banner(
     banner_symbol: &str, 
     banner_text: &str, 
-    output_file_description: &OutputFileDescription, 
+    file_context: &FileContext, 
     harvest_location: &Option<String>, 
     config: &Config) -> Option<String> {
 
-    let message: String = replace_sub_symbols(&banner_text.to_string(), output_file_description, harvest_location, config);
+    let message: String = replace_sub_symbols(&banner_text.to_string(), file_context, harvest_location, config);
 
     info!("Creating banner with symbol {{{:}}}, and message {{{:}}}", banner_symbol, message);
 
@@ -294,23 +324,23 @@ fn create_banner(
     Some(banner)
 }
 
-fn find_partner_file(file_description: &OutputFileDescription, partner_file_map: &HashMap<String, String>) -> Option<String> {
+fn find_partner_file(file_context: &FileContext, partner_file_map: &HashMap<String, String>) -> Option<String> {
 
-    if file_description.extension == "".to_string() {
+    if file_context.extension == "".to_string() {
         error!("Cannot match partner file to file without extension. PARTNER_FILE token means nothing in this context. ");
         return None;
     }
 
     let mut partner_file_extension: Option<String> = None;
-    if partner_file_map.contains_key(&file_description.extension) {
-        partner_file_extension = Some(partner_file_map[&file_description.extension].clone())
+    if partner_file_map.contains_key(&file_context.extension) {
+        partner_file_extension = Some(partner_file_map[&file_context.extension].clone())
     }
 
     if partner_file_extension.is_some() {
-        info!("Matched file extension {:} to {:?} for PARTNER_FILE", &file_description.extension, partner_file_extension);
-        Some(file_description.name.to_string() + "." + &partner_file_extension.unwrap())
+        info!("Matched file extension {:} to {:?} for PARTNER_FILE", &file_context.extension, partner_file_extension);
+        Some(file_context.name.to_string() + "." + &partner_file_extension.unwrap())
     } else {
-        warn!("No partner file defined in configuration for file {:}", file_description.extension);
+        warn!("No partner file defined in configuration for file {:}", file_context.extension);
         None
     }
 }

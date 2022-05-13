@@ -100,10 +100,12 @@ pub fn harvest_files_from_dir_as_string(dir: &Option<String>, include_list: &Vec
 
 pub fn harvest_all_files_in_dir(directory_path: &Option<String>, include_list: &Vec<String>) -> Option<Vec<String>> {
 
+    // @Refactor: Same comment as below on like 108
     let include_all_files: bool = include_list.is_empty();
 
     let pwd: String;
     if directory_path.is_none() {
+        // @Refactor: This could be a level higher, kinda weird having this non-obvious behavior as part of the function. - Austin Haskell
         let temp_pwd = get_current_path();
         if temp_pwd.is_none() {
             error!("Failed to figure out which directory to harvest. Was unable to get current path. ");
@@ -143,7 +145,7 @@ pub fn harvest_all_files_in_dir(directory_path: &Option<String>, include_list: &
             let file_extension   = extract_extension_from_file_name(&file_name);
             if file_extension.is_some() && !include_list.contains(&file_extension.clone().unwrap()) && !include_all_files{
                 // Not including all files and this extension isnt on the include list
-                info!("Ignoreing file {:} because it's extension is not on the include list. ", file_name);
+                info!("Ignoring file {:} because it's extension is not on the include list. ", file_name);
                 continue;
             }
 
@@ -168,3 +170,27 @@ pub fn harvest_all_files_in_dir(directory_path: &Option<String>, include_list: &
 
     Some(file_list)
 }
+
+// @todo: Harvest all subdirs command
+/*pub fn find_all_subdirs(root_path: &str) -> Vec<String> {
+    let files = std::fs::read_dir(root_path);
+    if files.is_err() {
+        error!("Unable to read directory information");
+    }
+
+    let subdir_list: Vec<String> = Vec::new();
+    for file_result in files.unwrap() {
+        if file_result.is_err() {
+            continue;
+        }
+
+        let file             = &file_result.unwrap();
+        let file_description = file.file_type().unwrap();
+
+        if !file_description.is_file() {
+            info!("Found dir: {:?}", file);
+        }
+    }
+
+    subdir_list
+}*/

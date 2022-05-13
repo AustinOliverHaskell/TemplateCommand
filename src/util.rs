@@ -86,24 +86,51 @@ pub fn extract_file_name_and_extension_from_path(file: &str) -> Option<String> {
 }
 
 pub fn get_template_directory() -> Result<String, String> {
-    let mut exe_path_buff = std::env::current_exe().unwrap();
-    let _ = exe_path_buff.pop();
-    let exe_location:      String = exe_path_buff.into_os_string().into_string().unwrap();
+    let exe_location = get_exe_directory().unwrap();
     let template_dir_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "templates";
 
     Ok(template_dir_path)
 }
 
+pub fn get_config_path() -> Result<String, String> {
+    let exe_location = get_exe_directory().unwrap();
+    let config_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "config ";
+
+    Ok(config_path)
+}
+
+pub fn get_exe_directory() -> Result<String, String> {
+    let mut exe_path_buff = std::env::current_exe().unwrap();
+    let _ = exe_path_buff.pop();
+    let exe_location:      String = exe_path_buff.into_os_string().into_string().unwrap();
+    Ok(exe_location)
+}
+
 #[test]
 fn extract_name_and_extension() {
     // @todo: This test doesn't pass on windows due to the / being different. - Austin Haskell 1/6/2022
-    assert_eq!(extract_file_name_and_extension_from_path("/home/austin/test/"), None);
+    // @hack: Works cross platform now, but is a little ugly... - Austin Haskell 5/12/2022
+    let mut test_string = format!(r"{:}home{:}austin{:}test{:}", 
+        &PLATFORM_SEPARATOR_SLASH, 
+        &PLATFORM_SEPARATOR_SLASH, 
+        &PLATFORM_SEPARATOR_SLASH, 
+        &PLATFORM_SEPARATOR_SLASH);
+    assert_eq!(extract_file_name_and_extension_from_path(&test_string), None);
 
-    assert_eq!(extract_file_name_and_extension_from_path("/home/austin/test/foo.txt").unwrap(), "foo.txt");
-    assert_eq!(extract_file_name_and_extension_from_path("home/foo.txt").unwrap(), "foo.txt");
-    assert_eq!(extract_file_name_and_extension_from_path("foo.txt").unwrap(), "foo.txt");
-    assert_eq!(extract_file_name_and_extension_from_path("/home/foo.txt").unwrap(), "foo.txt"); 
-    assert_eq!(extract_file_name_and_extension_from_path("/home/foo").unwrap(), "foo"); 
+    test_string = format!(r"{:}home{:}austin{:}test{:}foo.txt",         
+        &PLATFORM_SEPARATOR_SLASH, 
+        &PLATFORM_SEPARATOR_SLASH, 
+        &PLATFORM_SEPARATOR_SLASH, 
+        &PLATFORM_SEPARATOR_SLASH);
+    assert_eq!(extract_file_name_and_extension_from_path(&test_string).unwrap(), "foo.txt");
+    test_string = format!(r"home{:}foo.txt", &PLATFORM_SEPARATOR_SLASH);
+    assert_eq!(extract_file_name_and_extension_from_path(&test_string).unwrap(), "foo.txt");
+    test_string = format!(r"foo.txt");
+    assert_eq!(extract_file_name_and_extension_from_path(&test_string).unwrap(), "foo.txt");
+    test_string = format!(r"{:}home{:}foo.txt", &PLATFORM_SEPARATOR_SLASH, &PLATFORM_SEPARATOR_SLASH);
+    assert_eq!(extract_file_name_and_extension_from_path(&test_string).unwrap(), "foo.txt"); 
+    test_string = format!(r"{:}home{:}foo", &PLATFORM_SEPARATOR_SLASH, &PLATFORM_SEPARATOR_SLASH);
+    assert_eq!(extract_file_name_and_extension_from_path(&test_string).unwrap(), "foo"); 
 }
 
 #[test]

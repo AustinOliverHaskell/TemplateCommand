@@ -5,7 +5,6 @@ mod symbol_replacer;
 mod template_file_list;
 mod platform_specific;
 mod command_line_documentation;
-mod output_file_description;
 mod util;
 mod formatter;
 mod file_harvester;
@@ -18,12 +17,13 @@ use program_args::*;
 use file_manip::*;
 use symbol_replacer::*;
 use template_file_list::*;
-use output_file_description::*;
+use file_context::*;
 use command_line_documentation::print_all_variables;
 use file_harvester::harvest_files_from_dir_as_string;
 use platform_specific::PLATFORM_SEPARATOR_SLASH;
 use config::Config;
 use logger::Logger;
+use util::*;
 
 use log::*;
 
@@ -31,17 +31,11 @@ fn main() {
 
     let args = ProgramArguments::create();
 
-    match log::set_boxed_logger(Box::new(Logger::new(args.verbose_output))) {
-        Ok(()) => {},
-        _ => {println!("Failed to initialize logging framework..."); return; } 
-    }
-    log::set_max_level(if args.verbose_output { LevelFilter::Info } else { LevelFilter::Warn });
+    Logger::set_global_logger(args.verbose_output);
 
-    let mut exe_path_buff = std::env::current_exe().unwrap();
-    let _ = exe_path_buff.pop();
-    let exe_location:      String = exe_path_buff.into_os_string().into_string().unwrap();
-    let template_dir_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "templates";
-    let config_path:       String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "config";
+    let exe_location:      String = get_exe_directory().unwrap();
+    let template_dir_path: String = get_template_directory().unwrap();
+    let config_path:       String = get_config_path().unwrap();
 
     let mut config = Config::load(&config_path);
     if config.is_err() {
@@ -102,45 +96,40 @@ fn main() {
         enumeration_list = Vec::new();
     }
 
-    let output_file_description = OutputFileDescription {
+    let output_file_description = FileContext {
         name: args.file_name_without_extension.clone(),
         extension: args.extension.clone(),
+        path: String::new(),
 
-        platform:    None,
-        language:    None, 
-        enumeration: None
+        enumerations: FileEnumeration {
+            platform:    None,
+            language:    None, 
+            user_defined: None
+        }
     };
 
-    let mut output_file_list: Vec<OutputFileDescription> = Vec::new();
-    output_file_list.push(output_file_description.clone());
-
-    let mut expanded_list = expand_with_enumerations(
-        &output_file_list, 
+    let output_file_list = FileContext::enumerate(
+        &output_file_description, 
         &platform_list, 
         &language_list, 
         &enumeration_list
     );
 
-    if args.create_matching_header_and_source {
+    /*if args.create_matching_header_and_source {
         expanded_list = expand_with_matching_files(&expanded_list); 
-    }
+    }*/
 
     if args.write_names_of_files_to_screen {
-        for file in expanded_list {
+        for file in output_file_list {
             println!("{:}", file.name_with_extension());
         }
         return;
     }
     
-    for file in expanded_list {
+    for file in output_file_list {
         let processed_file = replace_symbols(&template_file, &file, &args.harvest_directory, &config);
 
-        let file_name;
-        if args.file_has_no_extension {
-           file_name = file.name_expanded_with_enumerations();
-        } else {
-           file_name = file.name_with_extension();
-        }
+        let file_name = file.name_with_extension(); 
 
         if args.write_file_to_screen {
             println!("----- {:} -----", file_name);
