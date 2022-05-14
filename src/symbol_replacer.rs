@@ -119,6 +119,10 @@ pub fn create_replacement_value(
                                         Some(context) => Some(context.path.clone()),
                                         None => Some(file_context.path.clone()) 
                                      },
+            "THIS_FILES_EXTENSION"=> match parent_file_context { 
+                                        Some(context) => Some(context.extension.clone()),
+                                        None => Some(file_context.extension.clone()) 
+                                     },
             "PARTNER_FILE"        => { find_partner_file(&file_context, &config.partner_file_map) }, 
             "EXTENSION"           => { Some(file_context.extension.clone()) },
             "DIR"                 => { Some(get_current_dir_name().unwrap_or(String::new()))},
