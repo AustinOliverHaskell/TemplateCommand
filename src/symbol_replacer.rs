@@ -96,6 +96,10 @@ pub fn create_replacement_value(
             "REPEAT_X_TIMES"       => { Some("UNIMPLEMENTED".to_string()) }, 
             "USER_VAR"             => { user_variable(&token.get_variable_as_string(0), &config.user_variables) }, 
             "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&file_context.expand_with_enumerations(), &token) },
+            "THIS_FILES_NAME_AS_TYPE" => match parent_file_context { 
+                                        Some(context) => file_name_as_type_with_args(&context.expand_with_enumerations(), &token),
+                                        None => file_name_as_type_with_args(&file_context.expand_with_enumerations(), &token)
+                                      },
             "IMPORT"               => { import_file(&token) },
             "RELATIVE_IMPORT"      => { Some("UNIMPLEMENTED".to_string()) },         
             "BANNER"               => { create_banner(&token.get_variable_as_string(0), &token.get_variable_as_string(1), file_context, harvest_location, config) },
@@ -122,6 +126,10 @@ pub fn create_replacement_value(
             "THIS_FILES_EXTENSION"=> match parent_file_context { 
                                         Some(context) => Some(context.extension.clone()),
                                         None => Some(file_context.extension.clone()) 
+                                     },
+            "THIS_FILES_NAME_AS_TYPE" => match parent_file_context { 
+                                        Some(context) => Some(string_in_pascal_case(&context.name)),
+                                        None => Some(string_in_pascal_case(&file_context.name ))
                                      },
             "PARTNER_FILE"        => { find_partner_file(&file_context, &config.partner_file_map) }, 
             "EXTENSION"           => { Some(file_context.extension.clone()) },
