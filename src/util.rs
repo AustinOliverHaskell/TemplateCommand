@@ -94,7 +94,7 @@ pub fn get_template_directory() -> Result<String, String> {
 
 pub fn get_config_path() -> Result<String, String> {
     let exe_location = get_exe_directory().unwrap();
-    let config_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "config ";
+    let config_path: String = exe_location.clone() + PLATFORM_SEPARATOR_SLASH + "config";
 
     Ok(config_path)
 }

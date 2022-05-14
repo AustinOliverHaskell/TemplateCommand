@@ -38,6 +38,7 @@ fn main() {
     let config_path:       String = get_config_path().unwrap();
 
     let mut config = Config::load(&config_path);
+    info!("Configuration path: {:}", config_path);
     if config.is_err() {
         error!("Failed to load configuration file. Creating default one. ");
         let defualt_config = Config::default();
