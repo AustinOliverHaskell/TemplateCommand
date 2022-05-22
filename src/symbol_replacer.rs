@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use log::*;
 
-use crate::template_file_list::UnprocessedTemplateFile;
+use crate::template_file_list::TemplateFile;
 use crate::file_manip::{get_current_path, get_current_dir_name};
 use crate::util::*;
 use crate::formatter::*;
@@ -15,7 +15,7 @@ use crate::file_context::*;
 use crate::platform_specific::*;
 
 pub fn replace_symbols(
-    unprocessed_file: &UnprocessedTemplateFile, 
+    unprocessed_file: &TemplateFile, 
     file_context: &FileContext, 
     harvest_location: &Option<String>, 
     config: &Config) -> String {

@@ -1,3 +1,5 @@
+use log::*;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FileContext {
     pub name: String,
@@ -16,6 +18,33 @@ impl FileContext {
 
             enumerations: FileEnumeration::blank()
         }
+    }
+
+    pub fn from_full_file_path(path: &str) -> Option<Self> {
+
+        use crate::util::*;
+
+        let file_name_and_extension = extract_file_name_and_extension_from_path(path);
+        if file_name_and_extension.is_none() {
+            error!("Failed to create file context from file path... extraction of file name and extension failed.");
+            return None; 
+        }
+        let file_name_and_extension = file_name_and_extension.unwrap();
+        let file_extension = extract_extension_from_file_name(&file_name_and_extension);
+        let file_name = remove_extensions_from_file_name(&file_name_and_extension);
+        if file_name.is_none() {
+            error!("Path provided to create new file context has no file name. ");
+            return None;
+        }
+        let file_name = file_name.unwrap();
+
+        Some(Self {
+            extension: file_extension.unwrap_or("".to_string()),
+            path: path.to_string(),
+            name: file_name,
+
+            enumerations: FileEnumeration::blank()
+        })
     }
 
     pub fn name_with_extension(self: &Self) -> String {
