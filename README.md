@@ -104,6 +104,8 @@ Template files are files with the name "template" and an extension. For example 
 
 If you've cloned tt from source, there exists a template_exmaples directory to get you started.
 
+For the -h option, there also can exist header.[some extension] files in the template directory. These function the exact same as template files but are only used when using -h to append the file to the front of another. 
+
 <br />
 
 # Template Variables
