@@ -61,13 +61,17 @@ Shows all templates that are available to use, also lists the directory in which
 
 File name to create. The extension on the filename determines which template file to use. 
 
->-h, --harvest
+>-r, --harvest
 
 The directory to use for all file name harvesting. See FOR_EACH_FILE_IN_DIR and EACH_FILE_IN_DIR in the template variable section below. 
 
 >-t, --template
 
 Specifies a template file to use.
+
+>-h, --header
+
+Uses a header.x file in the templates directory and appends it to the front of the file specified. Really handy to add a license to the front of a file. 
 
 # Configuration Files
 
