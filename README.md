@@ -29,7 +29,7 @@ Will print the names of the output files without showing their content or writin
 
 >-m, --matching_file
 
-If applicable, creates a matching file for whatever extension is used. A .cpp file will generate a corresponding .h file
+If applicable, creates a matching file for whatever extension is used. This command uses the partner_file_map defined in the configuration to determine which companion file to create. 
 
 >-o, --overwrite
 
@@ -61,7 +61,7 @@ Shows all templates that are available to use, also lists the directory in which
 
 File name to create. The extension on the filename determines which template file to use. 
 
->-h, --harvest
+>-r, --harvest
 
 The directory to use for all file name harvesting. See FOR_EACH_FILE_IN_DIR and EACH_FILE_IN_DIR in the template variable section below. 
 
@@ -69,9 +69,15 @@ The directory to use for all file name harvesting. See FOR_EACH_FILE_IN_DIR and 
 
 Specifies a template file to use.
 
+>-h, --header
+
+Uses a header.x file in the templates directory and appends it to the front of the file specified. Really handy to add a license to the front of a file. 
+
 # Configuration Files
 
-tt uses a singular configuration file that is located alongside the executable. This file will be generated if there isnt one whenever tt is first called. This configuration file contains three lists used for enumerations (-p, -l, and -e command flags) as well as a user defined hashmap that contains user defined variables. (See USER_VAR section down below for more information). 
+tt uses a singular configuration file that is located alongside the executable. This file will be generated if there isnt one whenever tt is first called. 
+
+This configuration file contains three lists used for enumerations (-p, -l, and -e command flags), a user defined hashmap that contains user defined variables. (See USER_VAR section down below for more information), and another user defined hashmap that contains the mapping for the PARTNER_FILE variable as well as the -m flag. 
 
 Example configuration file. (This is the one you'll get by default)
 ```JSON
@@ -82,6 +88,11 @@ Example configuration file. (This is the one you'll get by default)
 	"user_variables":{
 		"LOOPBACK_ADDR":"127.0.0.1",
 		"VERSION_MANAGEMENT":"git"
+	}, 
+	"partner_file_map":{
+		"c":"h",
+		"cpp":"h",
+		"h":"cpp",
 	}
 }
 ```
@@ -89,18 +100,21 @@ Example configuration file. (This is the one you'll get by default)
 </br>
 
 # Template Files
-Template files are files with the name "tt" and an extension. For example tt.cpp will be used when creating a cpp file. These files are located in a directory called templates alongside the tt executable. 
+Template files are files with the name "template" and an extension. For example template.cpp will be used when creating a cpp file. These files are located in a directory called templates alongside the tt executable. 
 
 If you've cloned tt from source, there exists a template_exmaples directory to get you started.
+
+For the -h option, there also can exist header.[some extension] files in the template directory. These function the exact same as template files but are only used when using -h to append the file to the front of another. 
 
 <br />
 
 # Template Variables
-tt supports multiple variables that can be added to your template file. These variables will be replaced with various values as defined below. All template variables start and end with "[]". Some of the more complicated template variables also contain a "{}" section. This allows you to supply format specifiers to those variables.  
+tt supports multiple variables that can be added to your template file. These variables will be replaced with various values as defined below. All template variables start and end with "[]". Template variables can be nested within others, see the FOR_EACH_FILE_IN_DIR variable for more info. Some template variables have required or optional parameters to further configure them.   
 
->\[\]BANNER{Symbol|||Text}\[\]
+<h3>BANNER{Symbol|||Text}</h3>
 
-Uses the Symbol passed to it to create a banner around the text. For example \[\]BANNER{*|||THIS IS TEXT}\[\] will create the following
+Uses the Symbol passed to it to create a banner around the text. For example BANNER{*|||THIS IS TEXT} will create the following
+
 ``` C++
 /*
 ****************
@@ -109,13 +123,18 @@ Uses the Symbol passed to it to create a banner around the text. For example \[\
 */
 ```
 
->\[\]FILE_NAME_AS_TYPE\[\]
+<h3>[]FILE_NAME_AS_TYPE{-suffix, +suffix, case}[]</h3>
 
-Uses whatever is passed to the -f flag without the extension formatted into pascal case. 
+This is the most common variable you'll use. It has several optional parameters that you can specify. 
 
->\[\]FILE_NAME_AS_TYPE{-suffix, +suffix, case}\[\]
+1) Change case
+	camel, pascal, spaced, kabob, lower, upper will format the file name to that case
+2) Add ending
+	+xxxxxxxx will add whatever x is to the end of the string
+3) Remove ending
+	-xxxxxxxx will remove whatever x is off the end of the file name, note that this will generate a warning if that ending does not exist. In the case of an ending not existing, the file name unmodified will be placed there instead
 
-Uses whatever is passed to the -f flag without the extension formatted into pascal case. Additionally this will add or subtract whatever is passed in the {}
+Uses whatever is passed to the -f flag without the extension formatted into pascal case by default. Additionally this will add or subtract whatever is passed in the {}
 
 ``` C++ 
 []FILE_NAME_AS_TYPE{-Accessor}[] * []FILE_NAME_AS_TYPE[]::get_model_instance() { /* impl */ }
@@ -149,90 +168,88 @@ my_file_test
 MY_FILE_TEST
 ```
 
-Note that this can be combined with +/- of FILE_NAME_AS_TYPE
+An important nuance about this command is that you can chain as many formats and addition/subtractions you want. For example: 
 
->\[\]FILE_NAME\[\]
+```C++
+[]FILE_NAME_AS_TYPE{-model, upper, +Manager}[]
+```
 
-Uses the file name and extension of the output file
+Will generate the following when ran with my_test_model.cpp
 
->\[\]FILE_NAME{-/+ending, case}\[\]
+```C++
+MY_TESTManager
+```
 
-Uses the file name and extension of the output file but subtracts or appends a different ending before the extension. Additionally a case can be specified. See FILE_NAME_AS_TYPE for supposed case names. 
+> Note: Leaving off the {} will format to the default case formatting (Pascal)
+
+<h3>FILE_NAME{-/+ending, case}</h3>
+
+Uses the file name and extension of the output file but subtracts or appends a different ending before the extension. Additionally a case can be specified. See FILE_NAME_AS_TYPE for a more in-depth explanation as well as a list of supported case names
 
 For example
 ```
-\[\]FILE_NAME{-_file}\[\]
+FILE_NAME{-_file}
 ```
 
 ran with a file name of my_file.txt will produce my.txt
 
->\[\]EXTENSION\[\]
+<h3>EXTENSION</h3>
 
-Evaluates to the right most extension of whatever is passed to -f. If there is no extension, this evaluates to the same thing as \[\]FILE_NAME\[\]
+Evaluates to the right most extension of whatever is passed to -f. If there is no extension, this evaluates to the same thing as FILE_NAME
 
->\[\]DIR\[\]
+<h3>DIR</h3>
 
 Evaluates to the name of the current directory from which the file will be generated to.
 
->\[\]DIR_AS_TYPE\[\]
+<h3>DIR_AS_TYPE</h3>
 
 Evaluates to the name of the current directory from which the file will be generated to but as a Pascal case type name. 
 
->\[\]PWD\[\]
+<h3>PWD</h3>
 
 Evaluates to the current path that the file will be generated to. 
 
->\[\]PARTNER_FILE\[\]
+<h3>PARTNER_FILE</h3>
 
-Only used currently when either a c, cpp, h file is created. Generates the opposite file type. 
+Uses the user defined hashmap in the configuration file to evaluate what is the corresponding file name. 
 
-For example attempting to generate my_file.cpp will evaluate this to be my_file.h 
+For example attempting to generate my_file.cpp this will evaluate to be my_file.h 
 
-Note: This variable will be skipped if -m is not present. 
-
->\[\]CURRENT_DATE\[\]
-
-Evaluates to the current date in dd-mm-yyyy formatting. 
-
->\[\]CURRENT_TIME\[\]
-
-Evaluates to the current date in hh:mm formatting. 
-
->\[\]PLATFORM\[\]
+<h3>PLATFORM</h3>
 
 Evaluates to the platform name taken from the platform enumeration file. 
 
 Note: This variable will be skipped without the -p flag. 
 
->\[\]LANGUAGE\[\]
+<h3>LANGUAGE</h3>
 
 Evaluates to the language name taken from the language enumeration file. 
 
 Note: This variable will be skipped without the -l flag. 
 
->\[\]ENUMERATION\[\]
+<h3>ENUMERATION</h3>
 
 Evaluates to the user defined enumeration name taken from the user defined  enumeration file. 
 
 Note: This variable will be skipped without the -e flag. 
 
->\[\]USER\[\]
+<h3>USER</h3>
 
 Evaluates to the name of the currently logged in user.
 
->\[\]USER_VAR{Variable name}\[\]
+<h3>USER_VAR{Variable name}</h3>
 
 Attempts to lookup a variable with the same name as is inside the brackets. These variables are defined inside the config file under user_variables. 
 
->\[\]OS\[\]
+<h3>OS</h3>
 
 Evaluates to the name of the currently running OS.
 
->\[\]DEVICE_NAME\[\]
+<h3>DEVICE_NAME</h3>
 
 Evaluates to the friendly name of the device. This is the same as what shows when pairing the device via bluetooth. 
 
->\[\]CURRENT_DATE{format}\[\]
+<h3>CURRENT_DATE{format}</h3>
 
 Evaluates to the current date but uses whatever is passed to {format} as the format string. 
 
@@ -265,42 +282,56 @@ class MyFile {
 
 ```
 
-Note: This follows the chrono formatting strings. See here: https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html
+>Note: This follows the chrono formatting strings. See here: https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html
 
->\[\]CURRENT_TIME{format}\[\]
+>Note: Defaults to dd-mm-yyyy formatting when no parameter is supplied
 
-Evaluates to the current time but uses the format specifier to format the string. For an example see \[\]CURRENT_DATE{format}\[\] above. 
+<h3>CURRENT_TIME{format}</h3>
 
-Note: This follows the chrono formatting strings. See here: https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html
+Evaluates to the current time but uses the format specifier to format the string. For an example see CURRENT_DATE{format} above. 
+
+>Note: This follows the chrono formatting strings. See here: https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html
+
+>Note: Defaults to hh:mm formatting when no parameter is defined. 
 
 
->\[\]EACH_FILE_IN_DIR{include list}\[\]
+<h3>EACH_FILE_IN_DIR{include list}</h3>
 
 Places the name of every file in the current directory (Or the harvest directory if the -h flag is used). This will add a new line after each file name. Additionally, a comma seperated list of extensions to include can be added inside the {} curly brackets. If -h is specified this will contain the path to that file aswell. Without -h this will just use the file name without the path to that file. 
 
 Running without an include list, ie empty brackets, will include all files in that directory. 
 
-For example, having \[\]EACH_FILE_IN_DIR{h, cpp}\[\] will expand to every file in the current directory but will only use  files with either .h or .cpp extensions. 
+For example, having EACH_FILE_IN_DIR{h, cpp} will expand to every file in the current directory but will only use  files with either .h or .cpp extensions. 
 
->\[\]FOR_EACH_FILE_IN_DIR{include list ||| line {}VAR{} line }\[\]
+<h3>FOR_EACH_FILE_IN_DIR{include list ||| line []VAR[] line }</>h3>
 
-This is the most complex variable that is currently supported. This variable takes two arguments seperated with a tripple pipe |||. The first argument is the set of files to include when harvesting files. The second argument is the line that will be repeated for each file. The line provided as the second argument supports the following variables: 
+This is the most complex variable that is currently supported. This variable takes two arguments seperated with a tripple pipe |||. The first argument is the set of files to include when harvesting files. The second argument is the line that will be repeated for each file. 
+
+This variable can have any of the other replacement variables inside it, doing so however changes the meaning of the following variables
 
 - FILE_NAME
-- FILE_NAME_AS_TYPE
-- FILE_NAME_WITHOUT_EXTENSION
-- FILE_NAME_IN_CAPS
-- EXTENSION
+- FILE_PATH
+- EXTENSION 
+- FILE_NAME_WITH_EXTENSION
 
-The functionality of the above variables is the same as their square-bracket counterparts. This will, in the future, come to use square brackets as well. 
+These will instead evaluate to the file that got harvested. So if using my_file.test as the template, running FOR_EACH_FILE_IN_DIR{h|||[]FILE_NAME[] 1.0 []FILE_NAME_WITH_EXTENSION[]} will generate something similar to below. 
 
-In addition to the above variables the following are supported:
+``` txt 
+a 1.0 a.h 
+b 1.0 b.h 
+c 1.0 c.h
+```
 
-- PATH - The full path to the harvested file. 
+The line provided as the second argument supports the following additional variables: 
 
-Note: The sub-variable used inside the line uses curly brackets {} rather than square brackets. This was to make the parsing easier. 
+- THIS_FILES_NAME
+- THIS_FILES_PATH
+- THIS_FILES_EXTENSION
 
->\[\]VERSION\[\]
+The variable above evaluate to the root file's context. So for example running with my_file.test, THIS_FILES_NAME will be my_file, THIS_FILES_PATH will be ./my_file.test and THIS_FILES_EXTENSION will be test. 
+
+
+<h3>VERSION</h3>
 
 Evaluates to the current version number of this tool in X.X.X formatting. 
 
@@ -401,13 +432,13 @@ A powerfull feature of tt is it's capability to repeat a line for every file in 
 // Generated on []CURRENT_DATE[] - []CURRENT_TIME[] by []USER[] with tt v[]VERSION[]
 
 module []DIR[]
-[]FOR_EACH_FILE_IN_DIR{qmldir, qrc, pro, c, cpp, h|||{}FILE_NAME_WITHOUT_EXTENSION{} 1.0 {}FILE_NAME{}}[]
+[]FOR_EACH_FILE_IN_DIR{qml, ui.qml|||[]FILE_NAME_WITHOUT_EXTENSION[] 1.0 []FILE_NAME[][]
 designersupported
 ```
 
-The above template will look in the current directory (or whatever is supplied to the -h option) and repeat {}FILE_NAME_WITHOUT_EXTENSION{} 1.0 {}FILE_NAME{} for each file with an extension not in the ignore list (qmldir, qrc, pro, c, cpp, h) and will evaluate any variables within the curly brackets. 
+The above template will look in the current directory (or whatever is supplied to the -h option) and repeat []FILE_NAME_WITHOUT_EXTENSION[] 1.0 []FILE_NAME[] for each file with an extension in the include list (qml, ui.qml). 
 
-Output of above example when run on a directory with two qmlfiles
+Output of above example when run on a directory with two qml files
 
 ```
 // Generated on 12-22-2021 13:29 by austinhaskell with tt v1.1.0

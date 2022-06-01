@@ -5,21 +5,21 @@ use log::*;
 
 use crate::platform_specific::PLATFORM_SEPARATOR_SLASH;
 
-pub fn load_template_file(template_file_dir_path: &String, template_file_name: &String) -> Option<String>{
+pub fn load_file(file_dir: &String, file_name: &String) -> Option<String>{
 
-    let template_path: String = String::from(template_file_dir_path) + PLATFORM_SEPARATOR_SLASH + template_file_name;
+    let file_path = if *file_dir == "" { file_name.to_string() } else { String::from(file_dir) + PLATFORM_SEPARATOR_SLASH + file_name };
 
-    info!("Attempting to load template file: {:}", template_path);
+    info!("Attempting to load file: {:}", file_path);
     
-    let possible_template_file_data = read_to_string(&template_path);
-    if possible_template_file_data.is_err() {
-        println!("Failed to load template file. Reason: {:}", possible_template_file_data.unwrap_err());
+    let possible_file_data = read_to_string(&file_path);
+    if possible_file_data.is_err() {
+        println!("Failed to load file. Reason: {:}", possible_file_data.unwrap_err());
         return None;
     }
 
-    let template_file_data = possible_template_file_data.unwrap();
+    let file_data = possible_file_data.unwrap();
 
-    Some(template_file_data)
+    Some(file_data)
 }
 
 pub fn write_file(path: &String, file_contents: &String, overwrite: bool) {

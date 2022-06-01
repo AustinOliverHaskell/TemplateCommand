@@ -120,7 +120,7 @@ A full list of the variables supported can be found on the github page for this 
                         .short("h")
                         .long("header")
                         .takes_value(true)
-                        .help("Uses a found tt.header.x file to prepend to the specified file. ")
+                        .help("Uses a found header.x file to prepend to the specified file. ")
                     )
                     .arg(
                         Arg::with_name("harvest_directory")
@@ -133,7 +133,6 @@ A full list of the variables supported can be found on the github page for this 
         let file_name = String::from(args.value_of("file_name").unwrap_or(""));
         let template_name = args.value_of("template_file").unwrap_or("");
 
-        let extension_list: Vec<&str> = file_name.split('.').collect();
 
         let harvest_directory: Option<String>;
         let harvest_directory_present = args.value_of("harvest_directory");
@@ -143,8 +142,15 @@ A full list of the variables supported can be found on the github page for this 
             harvest_directory = Some(String::from(args.value_of("harvest_directory").unwrap()));
         }
 
-        let header_file = args.value_of("header").unwrap_or("");
+        let header_file = args.value_of("header").unwrap_or("").to_string();
         let blank_file_name = args.value_of("blank").unwrap_or("");
+
+        let extension_list: Vec<&str>;
+        if args.is_present("header") {
+            extension_list = header_file.split('.').collect();
+        } else {
+            extension_list = file_name.split('.').collect();
+        }
         
         ProgramArguments {
             file_name: file_name.clone(),

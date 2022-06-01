@@ -38,6 +38,7 @@ fn main() {
     let config_path:       String = get_config_path().unwrap();
 
     let mut config = Config::load(&config_path);
+    info!("Configuration path: {:}", config_path);
     if config.is_err() {
         error!("Failed to load configuration file. Creating default one. ");
         let defualt_config = Config::default();
@@ -64,12 +65,50 @@ fn main() {
     info!("Using verbose output. ");
     info!("Configuration being used: {:?}", config);
 
+    if args.shove_header.is_some() {
+
+        let target_file = args.shove_header.unwrap();
+        info!("Prepending header onto file {:}", target_file);
+
+        let file_contents = file_manip::load_file(&"".to_string(), &target_file);
+        if file_contents.is_none() {
+            error!("Failed to load target file to apply header. Please make sure that the file {:} exists", target_file);
+            return;
+        }
+        let mut file_contents = file_contents.unwrap();
+
+        info!("Successfuly read file: {:}", target_file);
+
+        let header_template = TemplateFile::new_header(&args.extension_list, &template_dir_path);
+        if header_template.is_none() {
+            return; 
+        }
+
+        let file_context = FileContext::from_full_file_path(&target_file);
+        if file_context.is_none() {
+            return;
+        }
+
+        let evaluated_header_template = replace_symbols(
+            &header_template.unwrap(), 
+            &file_context.unwrap(), 
+            &None, 
+            &config);
+
+        // @future: Allow the swap of headers by adding a stop point to them. 
+        file_contents = evaluated_header_template + &file_contents;
+
+        write_file(&target_file, &file_contents, true);
+
+        return; 
+    }
+
     if args.create_blank.is_some() {
         write_file(&args.create_blank.unwrap(), &String::from(""), args.overwrite);
         return;
     }
 
-    let template_file = UnprocessedTemplateFile::new(&args.extension_list, &template_dir_path);
+    let template_file = TemplateFile::new(&args.extension_list, &template_dir_path);
     if template_file.is_none() {
         return;
     }

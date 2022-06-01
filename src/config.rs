@@ -1,3 +1,5 @@
+use log::*;
+
 use std::collections::HashMap;
 use std::fs::{read_to_string, File};
 use std::io::Write;
@@ -20,7 +22,9 @@ impl Config {
 		let config: Self; 
 		match raw_config {
 			Ok(val) => config = serde_json::from_str(&val).unwrap(),
-			_ => return Err("Failed to load configuration file. ".to_string())
+			Err(e) => {
+				error!("Failed to load configuation file - {:}", e);
+				return Err("Failed to load configuration file. ".to_string())}
 		}
 
 		return Ok(config);

@@ -8,6 +8,5 @@
 - Support for enviornment variables with a \[\]VAR{env}\[\] template variable
 - Support for registry key variables (Windows only) \[\]REGISTRY{key}\[\]
 - Support for path variables with \[\]PATH\[\] variable and \[\]FOR_EACH_PATH_VAR{ignore list}\[\]
-- Matching indentation level for lines created with FOR_EACH_FILE_IN_DIR
 - Support for relative \[\]DIR{how many dirs up the tree to move}\[\]
 - {}NUMBER{} variable for the FOR_EACH_FILE_IN_DIR variable that will evaluate to the iteration number

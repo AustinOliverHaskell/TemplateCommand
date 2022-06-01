@@ -1,0 +1,4 @@
+module []DIR[]
+FOR_EACH_FILE_IN_DIR{js, qml, ui.qml|||
+[]FILE_NAME_WITHOUT_EXTENSION[] 1.0 []FILE_NAME[]}
+designersupported

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use log::*;
 
-use crate::template_file_list::UnprocessedTemplateFile;
+use crate::template_file_list::TemplateFile;
 use crate::file_manip::{get_current_path, get_current_dir_name};
 use crate::util::*;
 use crate::formatter::*;
@@ -15,7 +15,7 @@ use crate::file_context::*;
 use crate::platform_specific::*;
 
 pub fn replace_symbols(
-    unprocessed_file: &UnprocessedTemplateFile, 
+    unprocessed_file: &TemplateFile, 
     file_context: &FileContext, 
     harvest_location: &Option<String>, 
     config: &Config) -> String {
@@ -30,6 +30,7 @@ pub fn replace_symbols(
     replace_sub_symbols(
         &processed_template, 
         file_context, 
+        None,
         harvest_location, 
         config)
 }
@@ -37,6 +38,7 @@ pub fn replace_symbols(
 pub fn replace_sub_symbols(
     data_to_replace: &String, 
     file_context: &FileContext, 
+    parent_context: Option<&FileContext>,
     harvest_location: &Option<String>, 
     config: &Config) -> String {
 
@@ -52,6 +54,7 @@ pub fn replace_sub_symbols(
         let replacement_symbol = create_replacement_value(
             &processed_template[found_token.start..found_token.end], 
             file_context, 
+            parent_context, 
             harvest_location, 
             &config);
 
@@ -64,35 +67,10 @@ pub fn replace_sub_symbols(
 
 }
 
-pub fn create_replacement_value_with_parent_context(
-    token_text: &str, 
-    file_context: &FileContext, 
-    parent_context: &FileContext,
-    harvest_location: &Option<String>, 
-    config: &Config) -> String {
-
-    let token = Token::from_string(token_text);
-    if token.is_err() {
-        error!("Failed to parse token");
-        return "ERR".to_string()
-    }
-    let token = token.unwrap();
-    info!("Harvest token: {:?}", token);
-
-    let replacement_value: String;
-    replacement_value = match token.id.as_ref() {
-        "IGNORE_HARVEST_FILE_NAME" => parent_context.name.to_string(), 
-        "IGNORE_HARVEST_FILE_PATH" => "Err".to_string(), 
-        _ => create_replacement_value(token_text, file_context, harvest_location, config)
-    };
-    
-
-    replacement_value
-}
-
 pub fn create_replacement_value(
     token_text: &str, 
     file_context: &FileContext, 
+    parent_file_context: Option<&FileContext>,
     harvest_location: &Option<String>, 
     config: &Config) -> String {
 
@@ -118,6 +96,10 @@ pub fn create_replacement_value(
             "REPEAT_X_TIMES"       => { Some("UNIMPLEMENTED".to_string()) }, 
             "USER_VAR"             => { user_variable(&token.get_variable_as_string(0), &config.user_variables) }, 
             "FILE_NAME_AS_TYPE"    => { file_name_as_type_with_args(&file_context.expand_with_enumerations(), &token) },
+            "THIS_FILES_NAME_AS_TYPE" => match parent_file_context { 
+                                        Some(context) => file_name_as_type_with_args(&context.expand_with_enumerations(), &token),
+                                        None => file_name_as_type_with_args(&file_context.expand_with_enumerations(), &token)
+                                      },
             "IMPORT"               => { import_file(&token) },
             "RELATIVE_IMPORT"      => { Some("UNIMPLEMENTED".to_string()) },         
             "BANNER"               => { create_banner(&token.get_variable_as_string(0), &token.get_variable_as_string(1), file_context, harvest_location, config) },
@@ -127,14 +109,28 @@ pub fn create_replacement_value(
             "HARVEST_EACH_SUBDIR"  => { Some("UNIMPLEMENTED".to_string()) },
             "DEFINE_TEMPLATE_VAR"  => { Some("UNIMPLEMENTED".to_string()) },
             "TEMPLATE_VAR"         => { Some("UNIMPLEMENTED".to_string()) },
+            "THIS_FILES_NAME"      => { this_files_name(&token, file_context, parent_file_context) }, 
             "ERR"                  =>   None,
             _                      =>   None,
         }
     } else {
         replacement_value = match token.id.as_ref() {
             "FILE_NAME"           => { Some(file_context.name_with_extension()) }
+            "THIS_FILES_NAME"     => { this_files_name(&token, file_context, parent_file_context) }, 
             "FILE_NAME_AS_TYPE"   => { Some(string_in_pascal_case(&file_context.expand_with_enumerations())) },
-            "FILE_NAME_WITHOUT_EXTENSION" => { Some(file_context.name.clone()) }
+            "FILE_NAME_WITHOUT_EXTENSION" => { Some(file_context.name.clone()) },
+            "THIS_FILES_PATH"     => match parent_file_context { 
+                                        Some(context) => Some(context.path.clone()),
+                                        None => Some(file_context.path.clone()) 
+                                     },
+            "THIS_FILES_EXTENSION"=> match parent_file_context { 
+                                        Some(context) => Some(context.extension.clone()),
+                                        None => Some(file_context.extension.clone()) 
+                                     },
+            "THIS_FILES_NAME_AS_TYPE" => match parent_file_context { 
+                                        Some(context) => Some(string_in_pascal_case(&context.name)),
+                                        None => Some(string_in_pascal_case(&file_context.name ))
+                                     },
             "PARTNER_FILE"        => { find_partner_file(&file_context, &config.partner_file_map) }, 
             "EXTENSION"           => { Some(file_context.extension.clone()) },
             "DIR"                 => { Some(get_current_dir_name().unwrap_or(String::new()))},
@@ -203,12 +199,13 @@ fn replace_harvest_variables(
     harvest_location: &Option<String>, 
     config: &Config) -> String {
    
+
     // @todo: This function can go away now that the refactor is almost done 
     // @Hack: This shouldnt be getting all this stuff passed down. This will all hopefully go away with the file_context stuff being worked on. 
-    let line_with_evaluated_variables = create_replacement_value_with_parent_context(
+    let line_with_evaluated_variables = replace_sub_symbols(
         &line.to_string(), 
         &file_context,
-        parent_file_context, 
+        Some(parent_file_context), 
         harvest_location, config
     );
 
@@ -246,8 +243,8 @@ fn file_name_without_extension_with_args(file_name: &str, token: &Token) -> Opti
 fn file_name_with_args(file_name: &str, token: &Token, extension: &str) -> Option<String> {
 
     if !token.has_variables() {
-        error!("- INTERNAL - Got an empty list of variables for file_name_with_args");
-        None
+        // @todo: Format this to default typing as defined in config file. 
+        Some(file_name.to_string())
     } else {
         match format_append_and_remove(file_name, &token.variables.clone().unwrap()[0].variable_list) {
             Some(value) => Some(value + "." + extension),
@@ -303,7 +300,7 @@ fn create_banner(
     harvest_location: &Option<String>, 
     config: &Config) -> Option<String> {
 
-    let message: String = replace_sub_symbols(&banner_text.to_string(), file_context, harvest_location, config);
+    let message: String = replace_sub_symbols(&banner_text.to_string(), file_context, None, harvest_location, config);
 
     info!("Creating banner with symbol {{{:}}}, and message {{{:}}}", banner_symbol, message);
 
@@ -343,6 +340,17 @@ fn find_partner_file(file_context: &FileContext, partner_file_map: &HashMap<Stri
         warn!("No partner file defined in configuration for file {:}", file_context.extension);
         None
     }
+}
+
+fn this_files_name(token: &Token, file_context: &FileContext, parent_context: Option<&FileContext>) -> Option<String> {
+
+    // If we have no parent context, this defaults to the file context we do have. 
+    let context = match parent_context {
+        Some(c) => c, 
+        None => file_context
+    };
+
+    file_name_with_args(&context.name, token, &context.extension)
 }
 
 #[test]
