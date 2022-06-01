@@ -19,6 +19,9 @@ impl FileContext {
     }
 
     pub fn name_with_extension(self: &Self) -> String {
+        if self.extension.is_empty() {
+            return self.expand_with_enumerations().to_string()
+        }
         String::from(self.expand_with_enumerations()) + "." + &self.extension
     }
 

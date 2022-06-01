@@ -98,7 +98,7 @@ fn main() {
 
     let output_file_description = FileContext {
         name: args.file_name_without_extension.clone(),
-        extension: args.extension.clone(),
+        extension: if args.file_has_no_extension { String::new() } else { args.extension.clone() },
         path: String::new(),
 
         enumerations: FileEnumeration {
