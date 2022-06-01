@@ -69,9 +69,13 @@ The directory to use for all file name harvesting. See FOR_EACH_FILE_IN_DIR and 
 
 Specifies a template file to use.
 
->-h, --header
+>-r, --header
 
 Uses a header.x file in the templates directory and appends it to the front of the file specified. Really handy to add a license to the front of a file. 
+
+>-h, --header
+
+Uses a found header.x file and prepends it to the specified file. 
 
 # Configuration Files
 
@@ -303,7 +307,7 @@ Running without an include list, ie empty brackets, will include all files in th
 
 For example, having EACH_FILE_IN_DIR{h, cpp} will expand to every file in the current directory but will only use  files with either .h or .cpp extensions. 
 
-<h3>FOR_EACH_FILE_IN_DIR{include list ||| line []VAR[] line }</>h3>
+<h3>FOR_EACH_FILE_IN_DIR{include list ||| line \[\]VAR\[\] line }</h3>
 
 This is the most complex variable that is currently supported. This variable takes two arguments seperated with a tripple pipe |||. The first argument is the set of files to include when harvesting files. The second argument is the line that will be repeated for each file. 
 
