@@ -1,0 +1,361 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"Sto",
+				"StockSnapshot"
+			],
+			[
+				"progr",
+				"program_rom"
+			],
+			[
+				"is",
+				"is_trainer_present"
+			],
+			[
+				"flag",
+				"flag_group_6"
+			],
+			[
+				"prog",
+				"prog_offsets"
+			],
+			[
+				"char",
+				"char_rom_size"
+			],
+			[
+				"pro",
+				"prog_offsets"
+			],
+			[
+				"set",
+				"set_boxed_logger"
+			],
+			[
+				"con",
+				"config_path"
+			],
+			[
+				"file",
+				"file_name"
+			],
+			[
+				"ex",
+				"extension"
+			],
+			[
+				"na",
+				"name"
+			],
+			[
+				"file_name",
+				"file_name_with_args"
+			],
+			[
+				"par",
+				"parent_context"
+			],
+			[
+				"replace",
+				"replace_sub_symbols"
+			],
+			[
+				"unw",
+				"unwrap"
+			],
+			[
+				"parent",
+				"parent_file_context"
+			],
+			[
+				"with",
+				"name_with_extension"
+			],
+			[
+				"file_",
+				"file_context"
+			],
+			[
+				"parent_",
+				"parent_file_context"
+			],
+			[
+				"Err",
+				"Error"
+			],
+			[
+				"conta",
+				"contains_key"
+			],
+			[
+				"out",
+				"OutputFileDescription"
+			],
+			[
+				"is_in",
+				"is_in_parameters"
+			],
+			[
+				"FILE",
+				"FILE_NAME_AS_TYPE"
+			],
+			[
+				"var",
+				"variable_list"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"mark",
+				"Markdown Preview: Preview in Browser"
+			],
+			[
+				"markdow",
+				"Markdown Preview: Preview in Browser"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/austinhaskell/Documents/TemplateCommand"
+	],
+	"file_history":
+	[
+		"/Users/austinhaskell/Documents/QuickSearch/src/file_search.rs",
+		"/Users/austinhaskell/Documents/QuickSearch/src/main.rs",
+		"/Users/austinhaskell/Documents/DnD/Ravnica 2.0/campaign.md",
+		"/Users/austinhaskell/Documents/DnD/Ravnica 2.0/props.md",
+		"/Users/austinhaskell/Documents/Midas/src/stock_source.rs",
+		"/Users/austinhaskell/Documents/Midas/src/main.rs",
+		"/Users/austinhaskell/Documents/NES_Emulator/src/arguments.rs",
+		"/Users/austinhaskell/Documents/NES_Emulator/src/main.rs",
+		"/Users/austinhaskell/Documents/NES_Emulator/src/util.rs",
+		"/Users/austinhaskell/Documents/NES_Emulator/src/file_format.rs",
+		"/Users/austinhaskell/Documents/NES_Emulator/src/ppu.rs",
+		"/Users/austinhaskell/Documents/NES_Emulator/src/cpu.rs",
+		"/Users/austinhaskell/Documents/ChatServer/src/logger.rs",
+		"/Users/austinhaskell/Documents/ChatServer/Cargo.toml",
+		"/Users/austinhaskell/Documents/NES_Emulator/integration_tests_results/write_load_and_loop.memdump",
+		"/Users/austinhaskell/Documents/TemplateCommand/src/symbol_replacer.rs",
+		"/Users/austinhaskell/Documents/TemplateCommand/template_examples/template.builder.h",
+		"/Users/austinhaskell/Documents/TemplateCommand/src/config.rs",
+		"/Users/austinhaskell/Documents/TemplateCommand/target/debug/config",
+		"/Users/austinhaskell/Documents/TemplateCommand/README.md",
+		"/Users/austinhaskell/Documents/TemplateCommand/template_examples/template.qmldir",
+		"/Users/austinhaskell/Documents/TemplateCommand/template_examples/template.singleton.h",
+		"/Users/austinhaskell/move_templates.sh",
+		"/Users/austinhaskell/Documents/TemplateCommand/src/formatter.rs",
+		"/Users/austinhaskell/Documents/TemplateCommand/target/debug/templates/template.testing",
+		"/Users/austinhaskell/Documents/TemplateCommand/src/logger.rs",
+		"/Users/austinhaskell/Documents/TemplateCommand/src/token.rs",
+		"/Users/austinhaskell/Documents/TemplateCommand/src/main.rs",
+		"/Users/austinhaskell/Documents/TemplateCommand/src/util.rs",
+		"/Users/austinhaskell/Documents/TemplateCommand/src/parser.rs",
+		"/Users/austinhaskell/Documents/TemplateCommand/src/file_harvester.rs",
+		"/Users/austinhaskell/Documents/TemplateCommand/src/template_file_list.rs",
+		"/Users/austinhaskell/Documents/sublime_liscence.txt"
+	],
+	"find":
+	{
+		"height": 38.0
+	},
+	"find_in_files":
+	{
+		"height": 98.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"scrollbar_highlights": true,
+		"show_context": true,
+		"use_buffer2": true,
+		"use_gitignore": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"folders":
+	[
+		{
+			"path": "/Users/austinhaskell/Documents/TemplateCommand"
+		}
+	],
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 24.0
+	},
+	"input":
+	{
+		"height": 36.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "",
+	"replace":
+	{
+		"height": 44.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"main",
+				"src/main.rs"
+			],
+			[
+				"stoc",
+				"src/stock_source.rs"
+			],
+			[
+				"config",
+				"target/debug/config"
+			],
+			[
+				"conf",
+				"src/config.rs"
+			],
+			[
+				"formatt",
+				"src/formatter.rs"
+			],
+			[
+				"template.test",
+				"target/debug/templates/template.testing"
+			],
+			[
+				"symb",
+				"src/symbol_replacer.rs"
+			],
+			[
+				"replace",
+				"src/replacement_token.rs"
+			],
+			[
+				"symbol",
+				"src/symbol_replacer.rs"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 212.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

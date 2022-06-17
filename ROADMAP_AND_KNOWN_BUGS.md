@@ -3,8 +3,6 @@
 
 # Future Features
 - Ability to specify which formatting to use with DIR_NAME_AS_TYPE
-- qml and ui.qml as matching file types
-- Force File Generation Flag - This would skip any unknown variable errors
 - Support for enviornment variables with a \[\]VAR{env}\[\] template variable
 - Support for registry key variables (Windows only) \[\]REGISTRY{key}\[\]
 - Support for path variables with \[\]PATH\[\] variable and \[\]FOR_EACH_PATH_VAR{ignore list}\[\]
