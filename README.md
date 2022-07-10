@@ -197,6 +197,21 @@ FILE_NAME{-_file}
 
 ran with a file name of my_file.txt will produce my.txt
 
+<h3>FORCE_FILE_NAME{name}</h3>
+
+Forces the output file name to be "name" this will produce a warning when a template file with this symbol is loaded. 
+
+For example a template file like the following
+
+<h4>other.qmldir</h4>
+
+```c++
+[]FORCE_FILE_NAME{qmldir}[]
+
+#File name set to qmldir!!!
+```
+ will always produce a file called qmldir regardless of what's passed to the -f flag. 
+
 <h3>EXTENSION</h3>
 
 Evaluates to the right most extension of whatever is passed to -f. If there is no extension, this evaluates to the same thing as FILE_NAME

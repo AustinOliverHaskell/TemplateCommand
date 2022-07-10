@@ -110,6 +110,7 @@ pub fn create_replacement_value(
             "DEFINE_TEMPLATE_VAR"  => { Some("UNIMPLEMENTED".to_string()) },
             "TEMPLATE_VAR"         => { Some("UNIMPLEMENTED".to_string()) },
             "THIS_FILES_NAME"      => { this_files_name(&token, file_context, parent_file_context) }, 
+            "FORCE_FILE_NAME"      => { Some("".to_string())}, /* Just blank out this line, we dont care about it's value here. See template_file_list.rs */ 
             "ERR"                  =>   None,
             _                      =>   None,
         }

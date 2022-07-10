@@ -113,6 +113,11 @@ fn main() {
         return;
     }
     let template_file = template_file.unwrap();
+    let forced_file_name: Option<String> = does_template_contain_forced_filename(&template_file.template_file_data);
+
+    if forced_file_name.is_some() {
+        warn!("File name is being forced to {:}", forced_file_name.clone().unwrap());
+    }
 
     let platform_list:    Vec<String>;
     if args.create_one_per_platform {
@@ -135,15 +140,36 @@ fn main() {
         enumeration_list = Vec::new();
     }
 
-    let output_file_description = FileContext {
-        name: args.file_name_without_extension.clone(),
-        extension: if args.file_has_no_extension { String::new() } else { args.extension.clone() },
-        path: String::new(),
+    let output_file_description = if forced_file_name.is_some() {
 
-        enumerations: FileEnumeration {
-            platform:    None,
-            language:    None, 
-            user_defined: None
+        let forced_file_name = forced_file_name.unwrap();
+        let forced_file_name_extension = extract_extension_from_file_name(&forced_file_name);
+        let forced_file_name_extension = 
+            if forced_file_name_extension.is_none() { String::new() } 
+            else { forced_file_name_extension.unwrap() };
+
+        FileContext {
+            name: forced_file_name.clone(),
+            extension: forced_file_name_extension,
+            path: String::new(),
+
+            enumerations: FileEnumeration {
+                platform:    None,
+                language:    None, 
+                user_defined: None
+            }
+        }
+    } else {
+        FileContext {
+            name: args.file_name_without_extension.clone(),
+            extension: if args.file_has_no_extension { String::new() } else { args.extension.clone() },
+            path: String::new(),
+
+            enumerations: FileEnumeration {
+                platform:    None,
+                language:    None, 
+                user_defined: None
+            }
         }
     };
 

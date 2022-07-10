@@ -81,3 +81,27 @@ pub fn figure_out_which_template_to_use(extension_list: &Vec<String>, root_path:
     Some(extension_list_copy.join("."))
 }
 
+pub fn does_template_contain_forced_filename(template_data: &str) -> Option<String>{
+
+    use crate::parser::*;
+    use crate::token::*;
+
+    // If force_file_name is not the first token, we ignore it. 
+    let first_token = Parser::find_first_token(template_data);
+
+    if first_token.is_none() { return None; }
+    let first_token = first_token.unwrap();
+
+    let token = Token::from_string(&template_data[first_token.start..first_token.end]);
+
+    if token.is_err() { return None; }
+    let token = token.unwrap();
+
+    if token.id != "FORCE_FILE_NAME".to_string() { return None; }
+
+    if token.has_variables() == false { error!("FORCE_FILE_NAME was provided but contains no file name. "); return None; }
+
+    let file_name = &token.variables.unwrap()[0].variable_list[0];
+
+    Some(file_name.to_string())
+}
