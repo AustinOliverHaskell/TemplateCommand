@@ -16,7 +16,7 @@ pub struct ProgramArguments {
     pub create_one_per_platform: bool,
     pub create_one_per_enumeration: bool,
     pub create_one_per_language: bool,
-    pub create_blank: Option<String>,
+    pub create_blank: bool,
 
     pub overwrite: bool,
     pub verbose_output: bool,
@@ -57,6 +57,7 @@ A full list of the variables supported can be found on the github page for this 
                         .required_unless("show_templates")
                         .required_unless("header")
                         .required_unless("blank")
+                        .required_unless("debug")
                     )
                     .arg(
                         Arg::with_name("overwrite")
@@ -98,6 +99,7 @@ A full list of the variables supported can be found on the github page for this 
                         Arg::with_name("debug")
                         .short("d")
                         .long("debug")
+                        .takes_value(true)
                         .help("If present, will print output to the screen instead of writing to file. "))
                     .arg(
                         Arg::with_name("list_names")
@@ -130,20 +132,23 @@ A full list of the variables supported can be found on the github page for this 
                         .help("Specifies the harvest directory. This is the directory that will be used for []FOR_EACH_FILE_IN_DIR{}[] and []EACH_FILE_IN_DIR[]. If this isn't present, the current working directory will be used. Currently if you use this argument, all file paths will be generated with the absolute path to that file. ")
                     ).get_matches();
 
-        let file_name = String::from(args.value_of("file_name").unwrap_or(""));
         let template_name = args.value_of("template_file").unwrap_or("");
 
-
-        let harvest_directory: Option<String>;
-        let harvest_directory_present = args.value_of("harvest_directory");
-        if harvest_directory_present.is_none() {
-            harvest_directory = None;
-        } else {
-            harvest_directory = Some(String::from(args.value_of("harvest_directory").unwrap()));
-        }
+        let harvest_directory = args.value_of("harvest_directory");
+        let harvest_directory = if harvest_directory.is_none() { None } else { Some(harvest_directory.unwrap().to_string()) }; 
 
         let header_file = args.value_of("header").unwrap_or("").to_string();
-        let blank_file_name = args.value_of("blank").unwrap_or("");
+
+        let file_name: String = 
+            if args.is_present("file_name") {
+                String::from(args.value_of("file_name").unwrap_or(""))
+            } else if args.is_present("blank") {
+                String::from(args.value_of("blank").unwrap_or(""))
+            } else if args.is_present("debug") {
+                String::from(args.value_of("debug").unwrap_or(""))
+            } else {
+                String::from("")
+            };
 
         let extension_list: Vec<&str>;
         if args.is_present("header") {
@@ -166,7 +171,7 @@ A full list of the variables supported can be found on the github page for this 
             create_one_per_platform:    args.is_present("platform"),
             create_one_per_enumeration: args.is_present("enumeration"),
             create_one_per_language:    args.is_present("language"),
-            create_blank:               if blank_file_name == "" { None } else { Some(blank_file_name.to_string()) },
+            create_blank:               args.is_present("blank"),
             
             overwrite:            args.is_present("overwrite"),
             verbose_output:       args.is_present("verbose"),

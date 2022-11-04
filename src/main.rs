@@ -103,8 +103,8 @@ fn main() {
         return; 
     }
 
-    if args.create_blank.is_some() {
-        write_file(&args.create_blank.unwrap(), &String::from(""), args.overwrite);
+    if args.create_blank {
+        write_file(&args.file_name, &String::from(""), args.overwrite);
         return;
     }
 
