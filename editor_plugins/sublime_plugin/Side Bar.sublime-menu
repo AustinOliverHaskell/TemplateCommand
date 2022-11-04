@@ -1,0 +1,8 @@
+[
+    {
+        "caption": "Create from Template",
+        "id": "create_from_template",
+        "command": "create_from_template",
+        "args": { "paths": [] }
+    }
+]
