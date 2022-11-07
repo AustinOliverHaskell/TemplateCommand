@@ -1,6 +1,7 @@
 import sublime
 import sublime_plugin
 
+import subprocess
 from subprocess import PIPE, Popen
 
 class CreateFromTemplateCommand(sublime_plugin.WindowCommand):
@@ -10,7 +11,7 @@ class CreateFromTemplateCommand(sublime_plugin.WindowCommand):
 		self.window.show_input_panel("File name to create:", "", self.on_done, None, self.on_cancel)
 
 	def on_done(self, text): 
-		create_file_from_template(self.template, self.directory + get_seperator_slash() + text)
+		create_file_from_template(self.template, text, self.directory)
 
 	def on_cancel(self):
 		print()
@@ -22,10 +23,10 @@ class RefreshTemplateListCommand(sublime_plugin.WindowCommand):
 	def run(self): 
 		create_side_bar_file()
 
-def create_file_from_template(template, file_name): 
+def create_file_from_template(template, file_name, directory): 
 	output_file = file_name + template;
 	print(output_file)
-	proc = subprocess.Popen(['tt', '-f ' + output_file], stdout=PIPE)
+	proc = subprocess.Popen(['tt', '-f ' + output_file], stdout=PIPE, cwd=directory)
 	print(proc.communicate()[0].decode('utf-8'))
 
 def create_side_bar_file(): 
