@@ -1,8 +1,8 @@
 [
     {
-        "caption": "Create from Template",
-        "id": "create_from_template",
-        "command": "create_from_template",
-        "args": { "paths": [] }
+        "caption": "Refresh Installed Templates List",
+        "id": "refresh",
+        "command": "refresh_template_list",
+        "args": {}
     }
 ]

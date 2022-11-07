@@ -1,0 +1,15 @@
+[
+    {
+        "caption": "Refresh Installed Templates List",
+        "id": "refresh",
+        "command": "refresh_template_list",
+        "args": {}
+    },
+    {
+        "caption": "From tt Template",
+        "id": "create_from_template",
+        "children" : [ 
+            INSERT_INSTALLED_TEMPLATES
+        ]
+    }
+]
