@@ -4,6 +4,7 @@ Command line utility for creating source files from a set of templates. Template
 ## <a href="/DOCUMENTATION.md">Documentation</a>
 ## <a href="/KNOWN_BUGS.md">Known Bugs</a>
 ## <a href="/ROADMAP.md">Roadmap</a>
+## <a href="/CHANGELOG.md">Changelog</a>
 
 # Install Directions
 ## Windows
