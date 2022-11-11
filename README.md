@@ -15,9 +15,12 @@ Command line utility for creating source files from a set of templates. Template
 ## Sublime Text 4
 ### Usage
 ### Install Directions
+<a href="/editor_plugins/sublime_plugin/install_instructions.md">Here</a>
+
 ## VS Code
 ### Usage
 ### Install Directions
+<a href="/editor_plugins/vs_code_plugin/install_instructions.md">Here</a>
 
 # Configuration Files
 
