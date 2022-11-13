@@ -1,0 +1,3 @@
+# Install Instructions
+
+Navigate to your sublime packages directory. If you do not know where this is, launch the Command Pallete Ctrl + Shift + P. Type "List Packages" and press enter. Select any of the packages that show up and you'll be placed in the Installed Packages directory. Navigate up one directory to the "Sublime Text" directory. Go into "Packages" and create a folder named "template_touch". Then copy the contents of this "sublime_plugins" directory into the "template_touch"
