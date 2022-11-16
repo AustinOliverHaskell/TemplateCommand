@@ -1,10 +1,10 @@
 # TemplateCommand (tt)
 Command line utility for creating source files from a set of templates. Template files can have various variables defined that get evaluated when creating a new file. 
 
-## <a href="/DOCUMENTATION.md">Documentation</a>
-## <a href="/KNOWN_BUGS.md">Known Bugs</a>
-## <a href="/ROADMAP.md">Roadmap</a>
-## <a href="/CHANGELOG.md">Changelog</a>
+## <a href="/docs/home.md">Documentation</a>
+## <a href="/known_bugs.md">Known Bugs</a>
+## <a href="/roadmap.md">Roadmap</a>
+## <a href="/changelog.md">Changelog</a>
 
 # Install Directions
 ## Windows
