@@ -1,6 +1,3 @@
-# Known Bugs 
--m flag does not correctly make the matching file. It uses the same template for both. 
-
 # Future Features
 - Ability to specify which formatting to use with DIR_NAME_AS_TYPE
 - Support for enviornment variables with a \[\]VAR{env}\[\] template variable

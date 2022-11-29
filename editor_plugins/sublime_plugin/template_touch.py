@@ -26,7 +26,7 @@ class RefreshTemplateListCommand(sublime_plugin.WindowCommand):
 def create_file_from_template(template, file_name, directory): 
 	output_file = file_name + template;
 	print(output_file)
-	proc = subprocess.Popen(['tt', '-f ' + output_file], stdout=PIPE, cwd=directory)
+	proc = subprocess.Popen(['tt', '-f' + output_file], stdout=PIPE, cwd=directory)
 	print(proc.communicate()[0].decode('utf-8'))
 
 def create_side_bar_file(): 
